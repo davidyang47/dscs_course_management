@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{495af9d0-9b42-4dc6-ad9f-601b8d695cdd}</ProjectGuid>
+    <ProjectGuid>{425a90ef-b97a-4e81-9034-b0a77d5005b7}</ProjectGuid>
     <RootNamespace>dscsmain</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
