@@ -1,4 +1,6 @@
 ﻿#include <bits/stdc++.h>
+#include "Graph.h"
+#include "Graphl.h"
 using namespace std;
 
 struct course{
@@ -81,5 +83,18 @@ int main()
         }
         cout<<endl;
     }
+    Graphl aGraphl(mycourses.size());
+    for (int i = 0; i < mycourses.size(); i++) {
+        for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
+            for (int k = 0; k < mycourses.size(); k++) {
+                if (mycourses[k].name == mycourses[i].prerequisites[j]) {
+					aGraphl.setEdge(k, i, 1);
+				}
+			}
+		}
+	}
+    cout << "DFS: ";
+    aGraphl.DFS(aGraphl, 0);
+    cout << endl;
     return 0;
 }
