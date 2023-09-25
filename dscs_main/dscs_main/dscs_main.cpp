@@ -12,8 +12,12 @@ struct course{
 };
 vector<course> mycourses;
 
+void Visit(Graph& G, course v) {
+    cout << v.name<< " ";
+}
+
 bool write_in(){
-    ofstream csv_data("test.csv", ios::app);
+    ofstream csv_data("test1.csv", ios::app);
     if (!csv_data.is_open())
     {
         cout << "Error: opening file fail" << endl;
@@ -32,7 +36,7 @@ bool write_in(){
 }
 
 bool read_in(vector<course> &mycourses){
-    ifstream csv_data("test.csv", ios::in);
+    ifstream csv_data("test1.csv", ios::in);
     string line;
 
     if (!csv_data.is_open())
@@ -72,6 +76,105 @@ bool read_in(vector<course> &mycourses){
     return true;
 }
 
+bool graph_set(Graphl& aGraphl, vector<course>& mycourses) {
+    for (int i = 0; i < mycourses.size(); i++) {
+        for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
+            for (int k = 0; k < mycourses.size(); k++) {
+                if (mycourses[k].name == mycourses[i].prerequisites[j]) {
+					aGraphl.setEdge(k, i, 1);
+				}
+			}
+		}
+	}
+	return true;
+}
+
+bool TopsortbyStack(Graph& G) {     
+    for (int i = 0; i < G.VerticesNum(); i++)
+        G.Mark[i] = UNVISITED;
+    stack<course> s1;
+    map<string, course> m1;  // 用于暂存课程名和课程的对应关系
+    int hours_count = 0;
+    int term = 1;
+    for (int i = 0; i < G.VerticesNum(); i++)
+        if (G.Indegree[i] == 0) {
+            m1[mycourses[i].name] = mycourses[i];
+            hours_count += mycourses[i].hours;
+        }
+    while (!s1.empty() || !m1.empty()) {              //如果队列中还有图的顶点
+        if (hours_count > 280) {
+            map<string, course>::iterator iter;
+            iter = m1.begin();
+            while (iter != m1.end()) {
+                string key = iter->first;
+                cout << key << " ";
+                iter++;
+            }
+            cout << endl;
+            int hours_tmp=hours_count;  
+            vector<string> course_names;
+            while(hours_tmp>280){
+                cout << "input the course you want to choose:";
+                hours_tmp = 0;
+                string select;
+                getline(cin, select);
+                istringstream sin;
+                string course_name;
+                sin.clear();
+                sin.str(select);
+                course_names.clear();
+                while (getline(sin, course_name, ' ')) {
+                    if (!m1.count(course_name)) {
+						cout<<"the course you input is not in the list! Please input again"<<endl;
+                        hours_tmp = 285;
+						break;
+					}
+                    course_names.push_back(course_name);
+                    hours_tmp += m1[course_name].hours;
+                }
+            }
+            hours_count -= hours_tmp;
+            for (int i = 0; i < course_names.size(); i++) {
+                s1.push(m1[course_names[i]]);
+                m1.erase(course_names[i]);
+            }
+        }
+        else {
+            map<string, course>::iterator iter;
+            iter = m1.begin();
+            while (iter != m1.end()) {
+                s1.push(iter->second);
+                iter++;
+            }
+            m1.clear();
+            hours_count = 0;
+        } 
+        cout << "the classtable of term " << term << " is:";
+        while(!s1.empty()){         
+            course V = s1.top();
+            s1.pop();                     //一个顶点出队
+            Visit(G, V);
+            int no = V.no - 1;
+            G.Mark[no] = VISITED;
+            for (Edge e = G.FirstEdge(no); G.IsEdge(e); e = G.NextEdge(e)) {
+                G.Indegree[G.ToVertex(e)]--;  //所有与之相邻的顶点入度-1
+                if (G.Indegree[G.ToVertex(e)] == 0) {
+                    m1[mycourses[G.ToVertex(e)].name] = mycourses[G.ToVertex(e)];
+                    hours_count += mycourses[G.ToVertex(e)].hours;
+                }
+            }
+        }
+        term++;
+        cout<< endl;
+    }
+    for (int i = 0; i < G.VerticesNum(); i++)
+        if (G.Mark[i] == UNVISITED) {
+            cout << " 此图有环！";        //图有环
+            return false;
+        }
+    return true;
+}
+
 int main()
 {
     write_in();
@@ -84,17 +187,7 @@ int main()
         cout<<endl;
     }
     Graphl aGraphl(mycourses.size());
-    for (int i = 0; i < mycourses.size(); i++) {
-        for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
-            for (int k = 0; k < mycourses.size(); k++) {
-                if (mycourses[k].name == mycourses[i].prerequisites[j]) {
-					aGraphl.setEdge(k, i, 1);
-				}
-			}
-		}
-	}
-    cout << "DFS: ";
-    aGraphl.DFS(aGraphl, 0);
-    cout << endl;
+    graph_set(aGraphl, mycourses);
+    TopsortbyStack(aGraphl);
     return 0;
 }
