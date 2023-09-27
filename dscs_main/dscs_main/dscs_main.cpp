@@ -3,21 +3,110 @@
 #include "Graphl.h"
 using namespace std;
 
-struct course{
+struct arrange {
+    string course_name;
+    //string teacher_name;
+    string course_time;
+};
+
+class course{
+ public:
     int no;
     string name;
     int credits;
     int hours;
     vector<string> prerequisites;
+    course() {
+		no=0;
+		name="";
+		credits=0;
+		hours=0;
+	}
+    course(int no, string name, int credits, int hours, vector<string> prerequisites) {
+		this->no = no;
+		this->name = name;
+		this->credits = credits;
+		this->hours = hours;
+		this->prerequisites = prerequisites;
+	}
+    ~course() {}
 };
 vector<course> mycourses;
+
+class table {
+ public:
+	int term;
+	vector<course> courses;
+    arrange course_table[4][5];
+    table() {
+		term = 0;
+        courses.clear();
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 5; j++) {
+               course_table[i][j].course_name = "";
+               course_table[i][j].course_time = "";
+            }
+        }
+	}
+    table(int term, vector<course> courses) {
+		this->term = term;
+		this->courses = courses;
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 5; j++) {
+                course_table[i][j].course_name = "";
+                course_table[i][j].course_time = "";
+            }
+        }
+	}
+    bool set_table(course c) {
+        courses.push_back(c);
+        vector<int> time;
+        time.clear();
+        int h= c.hours;
+        int i, j, end_week;
+        while (h > 0) {
+            vector<int>::iterator it;
+            do {
+                i = rand() % 4;
+                j = rand() % 5;
+                it = find(time.begin(), time.end(), j);
+            } while ((it != time.end()) || (course_table[i][j].course_name != ""));
+            if (h % 32 != 0) {
+                end_week = h % 32 / 2;
+                h -= end_week * 2;
+            }
+            else {
+                end_week = 16;
+                h -= 32;
+            }
+            course_table[i][j].course_name = c.name;
+            course_table[i][j].course_time = "1-" + to_string(end_week) + "周"+to_string(j+1)+"第"+to_string(i+1)+"节";
+            time.push_back(j);
+        }
+        time.clear();
+        return true;
+    }
+    bool show_table() {
+        cout << "the classtable of term " << term << " is:"<<endl;
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 5; j++) {
+                if(course_table[i][j].course_name!="")
+                    cout << course_table[i][j].course_name << ":" << course_table[i][j].course_time ;
+                cout << "     ";
+			}
+			cout << endl;
+        }
+        return true;
+    }
+	~table() {}
+};
 
 void Visit(Graph& G, course v) {
     cout << v.name<< " ";
 }
 
 bool write_in(){
-    ofstream csv_data("test1.csv", ios::app);
+    ofstream csv_data("test.csv", ios::app);
     if (!csv_data.is_open())
     {
         cout << "Error: opening file fail" << endl;
@@ -36,7 +125,7 @@ bool write_in(){
 }
 
 bool read_in(vector<course> &mycourses){
-    ifstream csv_data("test1.csv", ios::in);
+    ifstream csv_data("test.csv", ios::in);
     string line;
 
     if (!csv_data.is_open())
@@ -94,6 +183,7 @@ bool TopsortbyStack(Graph& G) {
         G.Mark[i] = UNVISITED;
     stack<course> s1;
     map<string, course> m1;  // 用于暂存课程名和课程的对应关系
+    vector<table> tables;
     int hours_count = 0;
     int term = 1;
     for (int i = 0; i < G.VerticesNum(); i++)
@@ -118,6 +208,8 @@ bool TopsortbyStack(Graph& G) {
                 hours_tmp = 0;
                 string select;
                 getline(cin, select);
+                if(select.empty())
+					continue;
                 istringstream sin;
                 string course_name;
                 sin.clear();
@@ -149,11 +241,13 @@ bool TopsortbyStack(Graph& G) {
             m1.clear();
             hours_count = 0;
         } 
-        cout << "the classtable of term " << term << " is:";
+        table t1;
+        t1.term = term;
         while(!s1.empty()){         
             course V = s1.top();
             s1.pop();                     //一个顶点出队
-            Visit(G, V);
+            t1.set_table(V);
+            //Visit(G, V);
             int no = V.no - 1;
             G.Mark[no] = VISITED;
             for (Edge e = G.FirstEdge(no); G.IsEdge(e); e = G.NextEdge(e)) {
@@ -164,6 +258,8 @@ bool TopsortbyStack(Graph& G) {
                 }
             }
         }
+        t1.show_table();
+        tables.push_back(t1);
         term++;
         cout<< endl;
     }
