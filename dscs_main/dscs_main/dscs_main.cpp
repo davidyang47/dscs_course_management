@@ -15,18 +15,21 @@ class course{
     string name;
     int credits;
     int hours;
+    string sort;
     vector<string> prerequisites;
     course() {
 		no=0;
 		name="";
 		credits=0;
 		hours=0;
+        sort = "";
 	}
-    course(int no, string name, int credits, int hours, vector<string> prerequisites) {
+    course(int no, string name, int credits, int hours, string sort, vector<string> prerequisites) {
 		this->no = no;
 		this->name = name;
 		this->credits = credits;
 		this->hours = hours;
+        this->sort = sort;
 		this->prerequisites = prerequisites;
 	}
     ~course() {}
@@ -155,7 +158,8 @@ bool read_in(vector<course> &mycourses){
         tmp.name = words[1];
         tmp.credits = stoi(words[2]);
         tmp.hours = stoi(words[3]);
-        for (int i = 4; i < words.size(); i++)
+        tmp.sort = words[4];
+        for (int i = 5; i < words.size(); i++)
         {
             tmp.prerequisites.push_back(words[i]);
         }
@@ -165,17 +169,67 @@ bool read_in(vector<course> &mycourses){
     return true;
 }
 
-bool graph_set(Graphl& aGraphl, vector<course>& mycourses) {
+bool graph_set(Graph& G, vector<course>& mycourses) {
     for (int i = 0; i < mycourses.size(); i++) {
         for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
             for (int k = 0; k < mycourses.size(); k++) {
                 if (mycourses[k].name == mycourses[i].prerequisites[j]) {
-					aGraphl.setEdge(k, i, 1);
+					G.setEdge(k, i, 1);
 				}
 			}
 		}
 	}
 	return true;
+}
+
+bool draw_graph(Graph& G) {
+    for (int i = 0; i < G.VerticesNum(); i++)
+        G.Mark[i] = UNVISITED;
+    stack<course> s1;
+    map<string, course> m1;
+    vector<vector<string> > layers(8);
+    int* indegree = new int[G.VerticesNum()];
+    for (int i = 0; i < G.VerticesNum(); i++)
+		indegree[i] = G.Indegree[i];
+    int layer = 0;
+    for (int i = 0; i < G.VerticesNum(); i++)
+        if (indegree[i] == 0) 
+            m1[mycourses[i].name] = mycourses[i];
+    while (!s1.empty() || !m1.empty()) {              //如果队列中还有图的顶点
+        map<string, course>::iterator iter;
+        iter = m1.begin();
+        while (iter != m1.end()) {
+            s1.push(iter->second);
+            layers[layer].push_back(iter->first);
+            iter++;
+        }
+        m1.clear();
+        while (!s1.empty()) {
+            course V = s1.top();
+            s1.pop();                     //一个顶点出队
+            int no = V.no - 1;
+            G.Mark[no] = VISITED;
+            for (Edge e = G.FirstEdge(no); G.IsEdge(e); e = G.NextEdge(e)) {
+                indegree[G.ToVertex(e)]--;  //所有与之相邻的顶点入度-1
+                if (indegree[G.ToVertex(e)] == 0) {
+                    m1[mycourses[G.ToVertex(e)].name] = mycourses[G.ToVertex(e)];
+                }
+            }
+        }
+        layer++;
+    }
+    for (int i = 0; i < G.VerticesNum(); i++)
+        if (G.Mark[i] == UNVISITED) {
+            cout << " 此图有环！";        //图有环
+            return false;
+        }
+    cout << endl;
+    for (int i = 0; i < layers.size(); i++) {
+        for(int j=0;j<layers[i].size();j++)
+			cout << layers[i][j] << " ";
+        cout << endl<<endl;
+    }
+    return true;
 }
 
 bool TopsortbyStack(Graph& G) {     
@@ -192,7 +246,7 @@ bool TopsortbyStack(Graph& G) {
             hours_count += mycourses[i].hours;
         }
     while (!s1.empty() || !m1.empty()) {              //如果队列中还有图的顶点
-        if (hours_count > 280) {
+        if (hours_count > 310) {
             map<string, course>::iterator iter;
             iter = m1.begin();
             while (iter != m1.end()) {
@@ -203,7 +257,7 @@ bool TopsortbyStack(Graph& G) {
             cout << endl;
             int hours_tmp=hours_count;  
             vector<string> course_names;
-            while(hours_tmp>280){
+            while(hours_tmp>310){
                 cout << "input the course you want to choose:";
                 hours_tmp = 0;
                 string select;
@@ -218,7 +272,7 @@ bool TopsortbyStack(Graph& G) {
                 while (getline(sin, course_name, ' ')) {
                     if (!m1.count(course_name)) {
 						cout<<"the course you input is not in the list! Please input again"<<endl;
-                        hours_tmp = 285;
+                        hours_tmp = 315;
 						break;
 					}
                     course_names.push_back(course_name);
@@ -252,7 +306,7 @@ bool TopsortbyStack(Graph& G) {
             G.Mark[no] = VISITED;
             for (Edge e = G.FirstEdge(no); G.IsEdge(e); e = G.NextEdge(e)) {
                 G.Indegree[G.ToVertex(e)]--;  //所有与之相邻的顶点入度-1
-                if (G.Indegree[G.ToVertex(e)] == 0) {
+                if (G.Indegree[G.ToVertex(e)] == 0 && mycourses[G.ToVertex(e)].sort!="选修课") {
                     m1[mycourses[G.ToVertex(e)].name] = mycourses[G.ToVertex(e)];
                     hours_count += mycourses[G.ToVertex(e)].hours;
                 }
@@ -276,7 +330,7 @@ int main()
     write_in();
     read_in(mycourses);
     for(int i=0;i<mycourses.size();i++){
-        cout<<mycourses[i].no<<" "<<mycourses[i].name<<" "<<mycourses[i].credits<<" "<<mycourses[i].hours<<" ";
+        cout<<mycourses[i].no<<" "<<mycourses[i].name<<" "<<mycourses[i].credits<<" "<<mycourses[i].hours<<" "<<mycourses[i].sort<<" ";
         for(int j=0;j<mycourses[i].prerequisites.size();j++){
             cout<<mycourses[i].prerequisites[j]<<" ";
         }
@@ -284,6 +338,7 @@ int main()
     }
     Graphl aGraphl(mycourses.size());
     graph_set(aGraphl, mycourses);
+    draw_graph(aGraphl);
     TopsortbyStack(aGraphl);
     return 0;
 }
