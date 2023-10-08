@@ -4,6 +4,7 @@
 #define VISITED 1
 #define INFINITE 0xffffffff
 #define N 5 // 定义图的顶点数
+
 using namespace std;
 struct listUnit {    //邻接表表目中数据部分的结构定义
 	int vertex;      //边的终点
@@ -101,6 +102,7 @@ public:
 			temp->next->element.vertex = to;
 			temp->next->element.weight = weight;
 			numEdge++;
+			Outdegree[from]++;
 			Indegree[to]++;
 			return;
 		}
@@ -117,6 +119,7 @@ public:
 			temp->next->element.weight = weight;
 			temp->next->next = other;
 			numEdge++;
+			Outdegree[from]++;
 			Indegree[to]++;
 			return;
 		}
@@ -136,9 +139,19 @@ public:
 			delete temp->next;
 			temp->next = other;
 			numEdge--;
+			Outdegree[from]--;
 			Indegree[to]--;
 			return;
 		}
+	}
+
+	Edge GetEdge(int oneVertex, int num) {
+		if(num>Outdegree[oneVertex])
+			return Edge(-1, -1, -1);
+		Link<listUnit>* temp = graList[oneVertex].head;
+		for (int i = 0; i < num; i++)
+			temp = temp->next;
+		return Edge(oneVertex, temp->element.vertex, temp->element.weight);
 	}
 
 	void IniGraphl(Graphl* Graphl, int A[N][N]);
@@ -188,7 +201,6 @@ void Graphl::BFS(Graph& G, int v) {           // 广度优先搜索算法的实现
 			}
 	}
 }
-
 
 // 函数功能：显示顶点
 void Graphl::Visit(Graph& G, int v) {

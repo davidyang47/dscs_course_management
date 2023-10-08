@@ -28,21 +28,29 @@ public:
 	int numEdge;				//图的边的数目
 	int* Mark;					/*Mark指针指向保存有图的顶点的标志位的数组,标志位用来标记某顶点是否被访问过*/
 	int* Indegree;				//Indegree指针指向保存有图的顶点的入度的数组
+	int* Outdegree;				//Outdegree指针指向保存有图的顶点的出度的数组
+	int* path;
 	Graph(int numVert) {		//构造函数
 		numVertex = numVert;      //确定图的顶点的个数
 		numEdge = 0;				//确定图的边的数目
 		Indegree = new int[numVertex]; /*为保存图的顶点的入度申请数组,Indegree为数组指针*/
+		Outdegree = new int[numVertex]; /*为保存图的顶点的出度申请数组,Outdegree为数组指针*/
+		path = new int[numVertex];
 		Mark = new int[numVertex];	 /*为图的顶点的标志位申请数组,Mark为数组指针*/
 
 		for (int i = 0; i < numVertex; i++) {	/*确定图的顶点的标志位和入度,即所有顶点的标志位初始化为未被访问过,入度初始化为0*/
 			Mark[i] = UNVISITED;
 			Indegree[i] = 0;
+			Outdegree[i] = 0;
+			path[i] = -1;
 		}
 	}
 
 	~Graph() {				//析构函数
 		delete[] Mark;
 		delete[] Indegree;
+		delete[] Outdegree;
+		delete[] path;
 	}
 
 	virtual Edge FirstEdge(int oneVertex) {	// 返回与顶点oneVertex相关联的第一条边
@@ -85,4 +93,5 @@ public:
 
 	virtual void setEdge(int from, int to, int weight) = 0;
 	virtual void delEdge(int from, int to) = 0;
+	virtual Edge GetEdge(int oneVertex, int num) = 0; // 返回与顶点oneVertex相关联的第num条边
 };

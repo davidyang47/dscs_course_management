@@ -3,6 +3,8 @@
 #include "Graphl.h"
 using namespace std;
 
+int maxn = -1;
+
 struct arrange {
     string course_name;
     //string teacher_name;
@@ -106,6 +108,17 @@ class table {
 
 void Visit(Graph& G, course v) {
     cout << v.name<< " ";
+}
+
+void calpath(Graph &G, int oneVertex, int length) {
+    if (G.Outdegree[oneVertex] == 0) {
+        maxn = max(length, maxn);
+        return;
+    }
+    for (int i = 0; i < G.Outdegree[oneVertex]; i++) {
+        Edge e = G.GetEdge(oneVertex, i + 1);
+        calpath(G, e.to, length + 1);
+    }
 }
 
 bool write_in(){
@@ -278,6 +291,17 @@ bool TopsortbyStack(Graph& G) {
                     course_names.push_back(course_name);
                     hours_tmp += m1[course_name].hours;
                 }
+                map<string, course>::iterator iter;
+                iter = m1.begin();
+                while (iter != m1.end()) {
+                    if (find(course_names.begin(), course_names.end(), iter->first) == course_names.end()) {  
+                        if (8 - G.path[iter->second.no - 1] == term) {
+                            cout<<iter->first<<" has to be chosen this term or you can't graduate on time"<<endl;
+                            hours_tmp = 315;
+                        }
+					}
+                    iter++;
+                }
             }
             hours_count -= hours_tmp;
             for (int i = 0; i < course_names.size(); i++) {
@@ -306,8 +330,9 @@ bool TopsortbyStack(Graph& G) {
             G.Mark[no] = VISITED;
             for (Edge e = G.FirstEdge(no); G.IsEdge(e); e = G.NextEdge(e)) {
                 G.Indegree[G.ToVertex(e)]--;  //所有与之相邻的顶点入度-1
-                if (G.Indegree[G.ToVertex(e)] == 0 && mycourses[G.ToVertex(e)].sort!="选修课") {
+                if (G.Indegree[G.ToVertex(e)] == 0 && mycourses[G.ToVertex(e)].sort != "选修课") {
                     m1[mycourses[G.ToVertex(e)].name] = mycourses[G.ToVertex(e)];
+                    //if(mycourses[G.ToVertex(e)].sort != "选修课")
                     hours_count += mycourses[G.ToVertex(e)].hours;
                 }
             }
@@ -317,11 +342,11 @@ bool TopsortbyStack(Graph& G) {
         term++;
         cout<< endl;
     }
-    for (int i = 0; i < G.VerticesNum(); i++)
-        if (G.Mark[i] == UNVISITED) {
-            cout << " 此图有环！";        //图有环
-            return false;
-        }
+    //for (int i = 0; i < G.VerticesNum(); i++)
+    //    if (G.Mark[i] == UNVISITED) {
+    //        cout << " 此图有环！";        //图有环
+    //        return false;
+    //    }
     return true;
 }
 
@@ -338,6 +363,15 @@ int main()
     }
     Graphl aGraphl(mycourses.size());
     graph_set(aGraphl, mycourses);
+    for (int i = 0; i < aGraphl.VerticesNum(); i++) {
+        calpath(aGraphl, i, 0);
+        aGraphl.path[i] = maxn;
+        maxn = -1;
+	}
+    for (int i = 0; i < aGraphl.VerticesNum(); i++) {
+        //cout<<aGraphl.Outdegree[i]<<" "<<mycourses[i].name<<endl;
+		cout<<mycourses[i].name<<" "<<aGraphl.path[i]<<endl;
+	}
     draw_graph(aGraphl);
     TopsortbyStack(aGraphl);
     return 0;
