@@ -260,7 +260,7 @@ bool TopsortbyStack(Graph& G) {
         }
     while (!s1.empty() || !m1.empty()) {              //如果队列中还有图的顶点
         if (hours_count > 310) {
-            map<string, course>::iterator iter;
+            map<string, course>::iterator iter;  
             iter = m1.begin();
             while (iter != m1.end()) {
                 string key = iter->first;
@@ -275,7 +275,7 @@ bool TopsortbyStack(Graph& G) {
                 hours_tmp = 0;
                 string select;
                 getline(cin, select);
-                if(select.empty())
+                if(select=="")
 					continue;
                 istringstream sin;
                 string course_name;
