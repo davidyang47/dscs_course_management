@@ -13,7 +13,7 @@ struct arrange {
 
 class course{
  public:
-    int no;
+    int no;  //123
     string name;
     int credits;
     int hours;
