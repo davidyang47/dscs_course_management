@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="teacher_portal">
+    <file>bg2.jpg</file>
+  </qresource>
+</RCC>

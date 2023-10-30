@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="QtWidgetsApplication2">
+    <file>bg2.jpg</file>
+    <file>bg1.jpg</file>
+  </qresource>
+</RCC>
