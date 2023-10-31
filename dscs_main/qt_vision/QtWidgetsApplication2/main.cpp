@@ -185,7 +185,7 @@ private slots:
 
 private:
     void setupUI() {
-        time_limit = 310;
+        time_limit = 450;
         QWidget* widget = new QWidget(this);
         QWidget* wtitle = new QWidget(this);
         QVBoxLayout* layout = new QVBoxLayout(widget);

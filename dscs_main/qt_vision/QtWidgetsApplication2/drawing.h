@@ -26,18 +26,19 @@ public:
         scaleFactor = 1.0;
         zoomFactor = 1.1;
         isDragging = false;
-        line_highlight = -1;
-        rect_highlight.x = -1; rect_highlight.y = -1;
     }
 
 private slots:
     void search_course() {
         QString content = searchLineEdit->text();
         if (content.isEmpty()) {
-            rect_highlight.x = -1;
-            rect_highlight.y = -1;
-            for (int i = 0; i < highlight_line.size(); i++) {
-                highlight_line[i] = 0;
+            for (int i = 0; i < rects_highlight.size(); i++) {
+                for (int j = 0; j < rects_highlight[i].size(); j++) {
+                    rects_highlight[i][j] = 0;
+                }
+            }
+            for (int i = 0; i < lines_highlight.size(); i++) {
+                lines_highlight[i] = 0;
             }
             update();
             QMessageBox::warning(this, "error", "please input a course");
@@ -47,23 +48,41 @@ private slots:
         for (int i = 0; i < layers.size(); i++) {
             for (int j = 0; j < layers[i].size(); j++) {
                 if (search_content == layers[i][j]) {
-                    coordinate center = coordinates[search_content];
+                    coordinate center = coordinates[layers[i][j]];
                     for (int k = 0; k < lines.size(); k++) {
-                        if ((lines[k].x1() == center.x && lines[k].y1() == center.y + 25) || (lines[k].x2() == center.x && lines[k].y2() == center.y - 25))
-                            highlight_line[k] = 1;
+                        if ((lines[k].x1() == center.x && lines[k].y1() == center.y + 25) || (lines[k].x2() == center.x && lines[k].y2() == center.y - 25)) {
+                            lines_highlight[k] = 1;
+                            for (int m = 0; m < rects.size(); m++) {
+                                for (int n = 0; n < rects[m].size(); n++) {
+                                    if (rects[m][n].contains(lines[k].p1()) || rects[m][n].contains(lines[k].p2()))
+                                        rects_highlight[m][n] = 1;
+                                }
+                            }
+                        }
+                        else
+                            lines_highlight[k] = 2;
                     }
-                    rect_highlight.x = i;
-                    rect_highlight.y = j;
+                    for (int m = 0; m < rects_highlight.size(); m++) {
+                        for (int n = 0; n < rects_highlight[m].size(); n++) {
+                            if (rects_highlight[m][n] != 1)
+                                rects_highlight[m][n] = 2;
+                        }
+                    }
+                    rects_highlight[i][j] = 1;
                     update();
                     return;
                 }
             }
         }
-        rect_highlight.x = -1;
-        rect_highlight.y = -1;
-        for (int i = 0; i < highlight_line.size(); i++) {
-            highlight_line[i] = 0;
+        for (int i = 0; i < lines_highlight.size(); i++) {
+            lines_highlight[i] = 0;
         }
+        for (int i = 0; i < rects_highlight.size(); i++) {
+            for (int j = 0; j < rects_highlight[i].size(); j++) {
+                rects_highlight[i][j] = 0;
+            }
+        }
+        searchLineEdit->clear();
         update();
         QMessageBox::warning(this, "error", "no such course");
     }
@@ -85,21 +104,34 @@ protected:
         // Draw rectangles and arrows
         for (int i = 0; i < rects.size(); i++) {
             for (int j = 0; j < rects[i].size(); j++) {
-                if (i == rect_highlight.x && j==rect_highlight.y)
+               // if (i == rect_highlight.x && j==rect_highlight.y)
+                if(rects_highlight[i][j]==1)
                     painter.setPen(QPen(Qt::red, 2));
-                else
+                else if(rects_highlight[i][j]==0)
                     painter.setPen(QPen(Qt::black, 2));
+                else {
+                    QColor trb = Qt::black;
+                    trb.setAlphaF(0.1);
+                    painter.setPen(QPen(trb));
+                }
                 painter.drawRect(rects[i][j]);
                 QRectF textRect = rects[i][j].adjusted(0, 0, 0, -arrowSize);
                 painter.drawText(textRect, Qt::AlignCenter, QString::fromLocal8Bit(layers[i][j]));
             }
         }
         for (int i = 0; i < lines.size(); i++) {
-            if(i== line_highlight || highlight_line[i] == 1)
+            //if(i== line_highlight || lines_highlight[i] == 1)
+            if (lines_highlight[i] == 1)
                 painter.setPen(QPen(Qt::red, 2));
-            else
+            else if (lines_highlight[i] == 0)
                 painter.setPen(QPen(Qt::black, 2));
+            else {
+                QColor trb = Qt::black;
+                trb.setAlphaF(0.1);
+                painter.setPen(QPen(trb));
+            }
             painter.drawLine(lines[i]);
+           
         }
     }
 
@@ -144,7 +176,7 @@ protected:
             // 遍历线段，检测鼠标是否位于某条线段上
             for (int i = 0; i < lines.size(); i++) {
                 // 检测鼠标是否位于线段上
-                if (isPointOnLine(scenePos, lines[i])) {
+                if (isPointOnLine(scenePos, lines[i]) && !lines_highlight[i]) {
                     coordinate c1 = { lines[i].x1(),lines[i].y1() - 25 };
                     QString str, end;
                     for (auto& pair : coordinates) {
@@ -164,14 +196,13 @@ protected:
 
                     // 在状态栏或其他地方显示坐标信息
                     statusBar()->showMessage(coordinatesText);
-                    line_highlight = i;
+                    lines_highlight[i] = 1;
                     update();
                     return;
                 }
             }
             // 如果鼠标不在任何线段上，清空坐标信息
             statusBar()->clearMessage();
-            line_highlight = -1;
             update();
 
             if (searchLineEdit->text().isEmpty()) {
@@ -180,20 +211,37 @@ protected:
                         if (rects[i][j].contains(scenePos)) {
                             coordinate center = coordinates[layers[i][j]];
                             for (int k = 0; k < lines.size(); k++) {
-                                if ((lines[k].x1() == center.x && lines[k].y1() == center.y + 25) || (lines[k].x2() == center.x && lines[k].y2() == center.y - 25))
-                                    highlight_line[k] = 1;
+                                if ((lines[k].x1() == center.x && lines[k].y1() == center.y + 25) || (lines[k].x2() == center.x && lines[k].y2() == center.y - 25)) {
+                                    lines_highlight[k] = 1;
+                                    for (int m = 0; m < rects.size(); m++) {
+                                        for (int n = 0; n < rects[m].size(); n++) {
+                                            if(rects[m][n].contains(lines[k].p1()) || rects[m][n].contains(lines[k].p2()))
+												rects_highlight[m][n] = 1;
+                                        }
+                                    }
+                                }
+                                else
+                                    lines_highlight[k] = 2;
                             }
-                            rect_highlight.x = i;
-                            rect_highlight.y = j;
+                            for (int m = 0; m < rects_highlight.size(); m++) {
+                                for (int n = 0; n < rects_highlight[m].size(); n++) {
+                                    if (rects_highlight[m][n]!=1)
+                                        rects_highlight[m][n] = 2;
+                                }
+                            }
+                            rects_highlight[i][j] = 1;
                             update();
                             return;
                         }
                     }
                 }
-                rect_highlight.x = -1;
-                rect_highlight.y = -1;
-                for (int i = 0; i < highlight_line.size(); i++) {
-                    highlight_line[i] = 0;
+                for (int i = 0; i < rects_highlight.size(); i++) {
+                    for (int j = 0; j < rects_highlight[i].size(); j++) {
+                        rects_highlight[i][j] = 0;
+                    }
+                }
+                for (int i = 0; i < lines_highlight.size(); i++) {
+                    lines_highlight[i] = 0;
                 }
             }
         }
@@ -253,9 +301,16 @@ private:
                 lines.push_back(line);
             }
         }
-        highlight_line.resize(lines.size());
-        for (int i = 0; i < highlight_line.size(); i++) {
-            highlight_line[i] = 0;
+        lines_highlight.resize(lines.size());
+        rects_highlight.resize(rects.size());
+        for (int i = 0; i < lines_highlight.size(); i++) {
+            lines_highlight[i] = 0;
+        }
+        for (int i = 0; i < rects_highlight.size(); i++) {
+            rects_highlight[i].resize(rects[i].size());
+            for (int j = 0; j < rects_highlight[i].size(); j++) {
+                rects_highlight[i][j] = 0;
+            }
         }
     }
     void setInitialWindowSize() {
@@ -331,10 +386,10 @@ private:
     QPoint lastMousePos;  // Last recorded mouse position during dragging
     QPoint panOffset;     // Offset for panning
     int line_highlight;		// Index of the highlighted line for mouse
-    coordinate rect_highlight;
-    vector<int> highlight_line; // Index of the highlighted line for search
     QVector<QLineF> lines; // Vector of lines to draw
     QVector<QVector<QRectF> > rects; // Vector of rectangles to draw
+    vector<vector<int> > rects_highlight; // 0: not highlight 1: highlight 2: 虚化
+    vector<int> lines_highlight;
     QLineEdit* searchLineEdit;
 };
 

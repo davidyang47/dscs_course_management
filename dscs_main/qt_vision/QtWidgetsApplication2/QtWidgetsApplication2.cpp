@@ -13,6 +13,8 @@ QtWidgetsApplication2::QtWidgetsApplication2(const int time_limit, QWidget *pare
     mainLayout = new QVBoxLayout(ui.widget);
     aGraphl = nullptr;
     d=nullptr;
+    gridLayout = nullptr;
+    hint_label = nullptr;
     hours_count = 0;
     term = 1;
     connect(ui.read_in, &QPushButton::clicked, this, &QtWidgetsApplication2::rc);
@@ -27,6 +29,55 @@ QtWidgetsApplication2::~QtWidgetsApplication2()
 
 void QtWidgetsApplication2::set_time_limit(const int t) {
 	time_limit = t;
+    QLayoutItem* child0;
+    if (ui.layout_label->takeAt(0) != 0) {
+        while ((child0 = ui.layout_label->takeAt(0)) != 0)
+        {
+            //setParent为NULL，防止删除之后界面不消失
+            if (child0->widget())
+            {
+                child0->widget()->setParent(NULL);
+                delete child0->widget();//释放
+            }
+
+            delete child0;
+        }
+        QLabel* label1 = new QLabel(QString::fromLocal8Bit("每学期学分限制：") + QString::number(time_limit));
+        ui.layout_label->addWidget(label1);
+        map<string, course>::iterator iter;
+        iter = mcourse.begin();
+        string warning = "In next term:";
+        warning += "\n";
+        int course_time = 0;
+        int total_time = 0;
+        while (iter != mcourse.end()) {
+            int no;
+            for (auto& pair : index) {
+                if (pair.second == iter->second.no) {
+                    no = pair.first;
+                    break;
+                }
+            }
+            if (8 - aGraphl->path[no] == term) {
+                warning += iter->first + " has to be chosen" + "\n";
+                course_time += iter->second.hours;
+            }
+            total_time += iter->second.hours;
+            iter++;
+        }
+        if (course_time > time_limit) {
+            warning += "but you can't choose them all, so you can't graduate with such pace, please reset or choose again!";
+            QMessageBox::warning(this, "hint", QString::fromLocal8Bit(warning));
+            return;
+        }
+        if (total_time < time_limit) {
+            QMessageBox::warning(this, "hint", "you can choose all the course with such limit");
+            return;
+        }
+        else {
+            setCheckBox();
+        }
+    }
 }
 
 void QtWidgetsApplication2::rc()
@@ -266,6 +317,7 @@ void QtWidgetsApplication2::manage() {
             for (Edge e = aGraphl->FirstEdge(no); aGraphl->IsEdge(e); e = aGraphl->NextEdge(e)) {
                 indegree[aGraphl->ToVertex(e)]--;  //所有与之相邻的顶点入度-1
                 if (indegree[aGraphl->ToVertex(e)] == 0 && mycourses[aGraphl->ToVertex(e)].sort != "Y") {
+
                     mcourse[mycourses[aGraphl->ToVertex(e)].name] = mycourses[aGraphl->ToVertex(e)];
                     //if(mycourses[aGraphl->ToVertex(e)].sort != "选修课 ")
                     hours_count += mycourses[aGraphl->ToVertex(e)].hours;
@@ -312,6 +364,13 @@ void QtWidgetsApplication2::manage() {
             cancel();
             return;
         }
+        if (term == 9) {
+            QMessageBox::information(this, "hint", "the course management is done");
+            for (int i = 0; i < aGraphl->VerticesNum(); i++)
+                indegree[i] = aGraphl->Indegree[i];
+            return;
+        }
+        del_redundancy();
         setCheckBox();
     }
     else {
@@ -470,7 +529,7 @@ void QtWidgetsApplication2::calpath(Graph& G, int oneVertex, int length) {
 
 void QtWidgetsApplication2::setCheckBox() {
     if (hours_count > time_limit) {
-        QGridLayout* gridLayout = new QGridLayout;
+        gridLayout = new QGridLayout;
 
         // 创建多选按钮并添加到网格布局
         map<string, course>::iterator iter;
@@ -488,7 +547,33 @@ void QtWidgetsApplication2::setCheckBox() {
         layout->addLayout(gridLayout);
     }
     else {
-        QLabel* label = new QLabel("the table can be generated directly");
-        layout->addWidget(label);
+        hint_label = new QLabel("the table can be generated directly");
+        layout->addWidget(hint_label);
     }
+}
+
+void QtWidgetsApplication2::del_redundancy() {
+    if (gridLayout) {
+        // 获取布局中的子控件
+        QLayoutItem* child0;
+        while ((child0 = gridLayout->takeAt(0)) != 0) {
+            //setParent为NULL，防止删除之后界面不消失
+            if (child0->widget())
+            {
+                child0->widget()->setParent(NULL);
+                delete child0->widget();//释放
+            }
+
+            delete child0;
+        }
+        // 重新布局
+        delete gridLayout;
+        gridLayout = nullptr;
+    }
+    if (hint_label) {
+        hint_label->setParent(NULL);
+        delete hint_label;
+        hint_label = nullptr;
+    }
+    layout->update();
 }

@@ -39,6 +39,8 @@ public:
     QLabel *label;
     QWidget *verticalLayoutWidget_2;
     QVBoxLayout *layout_label;
+    QWidget *verticalLayoutWidget_3;
+    QVBoxLayout *layout_generate;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
@@ -134,6 +136,15 @@ public:
         layout_label->setContentsMargins(11, 11, 11, 11);
         layout_label->setObjectName("layout_label");
         layout_label->setContentsMargins(0, 0, 0, 0);
+        verticalLayoutWidget_3 = new QWidget(centralWidget);
+        verticalLayoutWidget_3->setObjectName("verticalLayoutWidget_3");
+        verticalLayoutWidget_3->setGeometry(QRect(460, 720, 91, 41));
+        layout_generate = new QVBoxLayout(verticalLayoutWidget_3);
+        layout_generate->setSpacing(6);
+        layout_generate->setContentsMargins(11, 11, 11, 11);
+        layout_generate->setObjectName("layout_generate");
+        layout_generate->setSizeConstraint(QLayout::SetDefaultConstraint);
+        layout_generate->setContentsMargins(0, 0, 0, 0);
         QtWidgetsApplication2Class->setCentralWidget(centralWidget);
         frame->raise();
         read_in->raise();
@@ -145,6 +156,7 @@ public:
         back_to->raise();
         label->raise();
         verticalLayoutWidget_2->raise();
+        verticalLayoutWidget_3->raise();
         menuBar = new QMenuBar(QtWidgetsApplication2Class);
         menuBar->setObjectName("menuBar");
         menuBar->setGeometry(QRect(0, 0, 1000, 22));

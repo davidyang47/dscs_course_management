@@ -39,6 +39,7 @@ private:
     bool graph_set(Graphl*& G, vector<course>& mycourses);
     void calpath(Graph& G, int oneVertex, int length);
     void setCheckBox();
+    void del_redundancy();
     Ui::QtWidgetsApplication2Class ui;
     QVBoxLayout* mainLayout;
     QVBoxLayout* layout;
@@ -50,6 +51,8 @@ private:
     QVector<QCheckBox*> checkboxes;
     vector<table> tables;
     Drawing* d;
+    QGridLayout* gridLayout;  //放置checkbox
+    QLabel* hint_label;  //提醒可直接生成课表
     int hours_count;
     int time_limit;
     int term;

@@ -50,8 +50,18 @@ public:
             vector<int>::iterator it;
             do {
                 i = rand() % 4;
-                j = rand() % 5;
-                it = find(time.begin(), time.end(), j);
+                if (c.hours > 64 && c.hours < 96)
+                    j = (rand() % 3) * 2;
+                else
+                    j = rand() % 5;
+                if (c.hours < 96)
+                    for (int k = -1; k < 1; k++) {
+                        it = find(time.begin(), time.end(), j + k);
+                        if (it != time.end())
+                            break;
+                    }
+                else
+                    it = find(time.begin(), time.end(), j);
             } while ((it != time.end()) || (course_table[i][j].course_name != ""));
             if (h % 32 != 0) {
                 end_week = h % 32 / 2;
