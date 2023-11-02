@@ -9,7 +9,7 @@ teacher_portal::teacher_portal(QWidget* parent)
 	aGraphl = nullptr;
 	filepath = "";
 	d = nullptr;
-	time_limit = 310;
+	time_limit = 450;
 	connect(ui.read_in, &QPushButton::clicked, this, &teacher_portal::read);
 	connect(ui.to_show, &QPushButton::clicked, this, &teacher_portal::show_graph);
 	connect(ui.to_exit, &QPushButton::clicked, this, &teacher_portal::shut);

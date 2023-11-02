@@ -1,4 +1,4 @@
-#ifndef TEACHER_PORTAL_H
+ï»¿#ifndef TEACHER_PORTAL_H
 #define TEACHER_PORTAL_H
 
 #include "ui_teacher_portal.h"
@@ -21,7 +21,7 @@ class teacher_portal : public QMainWindow
 	 ~teacher_portal();
 
 signals:
-    void back();  //·µ»ØµÇÂ¼½çÃæ
+    void back();  
     void send_time_changed(int time);
 
 private slots:
@@ -44,11 +44,11 @@ private:
     QVector<QCheckBox*> checkboxes;
     vector<course> mycourses;
     Graphl* aGraphl;
-    map<int, int> index;   //¿Î³Ì±àºÅºÍÍ¼ÖÐÐòºÅµÄ¶ÔÓ¦ Ç°£ºÍ¼ÖÐÐòºÅ ºó£º¿Î³Ì±àºÅ
+    map<int, int> index;   
     Drawing* d;
     int time_limit;
     int* indegree;
-    string filepath;  //ÎÄ¼þµØÖ·
+    string filepath;  
     QVector<QLineEdit*> when_add;
     QButtonGroup* c_type;
 };

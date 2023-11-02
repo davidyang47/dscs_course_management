@@ -30,9 +30,11 @@ private slots:
     void wc();
     void sh();
     void shut();
-    void manage();
+    void manage_user();
+    void manage_com();
     void cancel();
     void back_to_login();
+    void generate_table();
 
 private:
     bool read_in(vector<course> &mycourses);
@@ -40,6 +42,8 @@ private:
     void calpath(Graph& G, int oneVertex, int length);
     void setCheckBox();
     void del_redundancy();
+    void table_output(int mode, vector<string> course_names);  //mode=0:手动选课 mode=1:电脑选课  course_names 电脑选课时存储选修课
+    void findMaxCombination(map<string,course> &data, vector<course> &result, vector<course>& tem_result, int &max, int current, int limit, map<string,course>::iterator it);
     Ui::QtWidgetsApplication2Class ui;
     QVBoxLayout* mainLayout;
     QVBoxLayout* layout;

@@ -130,7 +130,7 @@ public:
         label->setAlignment(Qt::AlignCenter);
         verticalLayoutWidget_2 = new QWidget(centralWidget);
         verticalLayoutWidget_2->setObjectName("verticalLayoutWidget_2");
-        verticalLayoutWidget_2->setGeometry(QRect(40, 240, 161, 21));
+        verticalLayoutWidget_2->setGeometry(QRect(40, 230, 161, 31));
         layout_label = new QVBoxLayout(verticalLayoutWidget_2);
         layout_label->setSpacing(6);
         layout_label->setContentsMargins(11, 11, 11, 11);
@@ -138,7 +138,7 @@ public:
         layout_label->setContentsMargins(0, 0, 0, 0);
         verticalLayoutWidget_3 = new QWidget(centralWidget);
         verticalLayoutWidget_3->setObjectName("verticalLayoutWidget_3");
-        verticalLayoutWidget_3->setGeometry(QRect(460, 720, 91, 41));
+        verticalLayoutWidget_3->setGeometry(QRect(460, 700, 91, 61));
         layout_generate = new QVBoxLayout(verticalLayoutWidget_3);
         layout_generate->setSpacing(6);
         layout_generate->setContentsMargins(11, 11, 11, 11);
@@ -151,12 +151,12 @@ public:
         to_show->raise();
         to_manage->raise();
         to_exit->raise();
-        widget->raise();
         verticalLayoutWidget->raise();
         back_to->raise();
         label->raise();
         verticalLayoutWidget_2->raise();
         verticalLayoutWidget_3->raise();
+        widget->raise();
         menuBar = new QMenuBar(QtWidgetsApplication2Class);
         menuBar->setObjectName("menuBar");
         menuBar->setGeometry(QRect(0, 0, 1000, 22));
