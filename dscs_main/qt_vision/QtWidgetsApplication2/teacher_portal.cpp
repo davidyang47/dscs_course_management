@@ -15,6 +15,8 @@ teacher_portal::teacher_portal(QWidget* parent)
 	connect(ui.to_exit, &QPushButton::clicked, this, &teacher_portal::shut);
 	connect(ui.add, &QPushButton::clicked, this, [this]() {initial(1); });
 	connect(ui.to_set, &QPushButton::clicked, this, [this]() {initial(2); });
+	connect(ui.del, &QPushButton::clicked, this, [this]() {initial(3); });
+	connect(ui.list, &QPushButton::clicked, this, &teacher_portal::list_student);
 	connect(ui.back_to, &QPushButton::clicked, this, &teacher_portal::back_to_login);
 }
 
@@ -146,7 +148,7 @@ void teacher_portal::initial(int mode) {
 			// 创建多选按钮并添加到网格布局
 			for (int i = 0; i < mycourses.size(); i++) {
 				QCheckBox* checkBox = new QCheckBox(QString::fromLocal8Bit(mycourses[i].name));
-				gridLayout->addWidget(checkBox, i / 3, i % 3); // i / 2 行，i % 2 列
+				gridLayout->addWidget(checkBox, i / 3, i % 3); // i / 3 行，i % 3 列
 				checkboxes.push_back(checkBox);
 			}
 
@@ -161,6 +163,8 @@ void teacher_portal::initial(int mode) {
 			connect(add1, &QPushButton::clicked, this, &teacher_portal::add_course);
 			ui.add->setDisabled(true);
 			ui.to_set->setDisabled(true);
+			ui.del->setDisabled(true);
+			ui.list->setDisabled(true);
 		}
 		else if (mode == 2) {
 			QWidget* time_w = new QWidget(contentWidget);
@@ -180,6 +184,26 @@ void teacher_portal::initial(int mode) {
 			connect(add1, &QPushButton::clicked, this, &teacher_portal::set_time);
 			ui.add->setDisabled(true);
 			ui.to_set->setDisabled(true);
+			ui.del->setDisabled(true);
+			ui.list->setDisabled(true);
+		}
+		else {
+			QLabel* ldel = new QLabel(QString::fromLocal8Bit("选择想要删除的课: "));
+			QGridLayout* gridLayout = new QGridLayout;
+
+			// 创建多选按钮并添加到网格布局
+			for (int i = 0; i < mycourses.size(); i++) {
+				QCheckBox* checkBox = new QCheckBox(QString::fromLocal8Bit(mycourses[i].name));
+				gridLayout->addWidget(checkBox, i / 3, i % 3); // i / 3 行，i % 3 列
+				checkboxes.push_back(checkBox);
+			}
+			layout->addWidget(ldel);
+			layout->addLayout(gridLayout);
+			connect(add1, &QPushButton::clicked, this, &teacher_portal::delete_course);
+			ui.add->setDisabled(true);
+			ui.to_set->setDisabled(true);
+			ui.del->setDisabled(true);
+			ui.list->setDisabled(true);
 		}
 		connect(add2, &QPushButton::clicked, this, &teacher_portal::cancel);
 	}
@@ -189,6 +213,10 @@ void teacher_portal::initial(int mode) {
 }
 
 void teacher_portal::add_course() {
+	if (when_add[0]->text().isEmpty() || when_add[1]->text().isEmpty() || when_add[2]->text().isEmpty()) {
+		QMessageBox::warning(this, "hint", "please fill in all blanks");
+		return;
+	}
 	int sno= when_add[0]->text().toInt();
 	string sname = when_add[1]->text().toLocal8Bit().constData();
 	for (int i = 0; i < mycourses.size(); i++) {
@@ -204,7 +232,7 @@ void teacher_portal::add_course() {
 	course tmp;
 	tmp.no = sno;
 	tmp.name = sname;
-	tmp.credits = when_add[2]->text().toInt();
+	tmp.credits = when_add[2]->text().toFloat();
 	tmp.hours = tmp.credits * 16;
 	tmp.sort = (c_type->checkedId()) ? "Y" : "N";
 	for (int i = 0; i < checkboxes.size(); i++) {
@@ -227,13 +255,22 @@ void teacher_portal::add_course() {
 		indegree[i] = aGraphl->Indegree[i];
 
 	//将tmp写入文件尾部
-	ofstream course_file(filepath, ios::app);
+	/*ofstream course_file(filepath, ios::app);
 	course_file << tmp.no << "," << tmp.name << "," << tmp.credits << "," << tmp.hours << "," << tmp.sort;
 	for (const string& prereq : tmp.prerequisites) {
 		course_file << "," << prereq;
 	}
-	course_file << "\n";
-
+	course_file << "\n";*/
+	QSqlQuery query;
+	string pres = "";
+	for (int i = 0; i < tmp.prerequisites.size(); i++) {
+		pres += tmp.prerequisites[i];
+		if (i != tmp.prerequisites.size() - 1)
+			pres += ",";
+	}
+	QString sql = QString("INSERT INTO [course_manage].[dbo].[Table_course] VALUES(%1,'%2',%3,%4,'%5','%6')")
+		.arg(tmp.no).arg(QString::fromLocal8Bit(tmp.name.c_str())).arg(tmp.credits).arg(tmp.hours).arg(QString::fromLocal8Bit(tmp.sort.c_str())).arg(QString::fromLocal8Bit(pres.c_str()));
+	query.exec(sql);
 	QMessageBox::information(this, "hint", "add succeed", QMessageBox::Ok);
 	cancel();
 }
@@ -270,6 +307,8 @@ void teacher_portal::cancel() {
 		indegree[i] = aGraphl->Indegree[i];
 	ui.add->setDisabled(false);
 	ui.to_set->setDisabled(false);
+	ui.del->setDisabled(false);
+	ui.list->setDisabled(false);
 }
 
 void teacher_portal::back_to_login() {
@@ -303,9 +342,106 @@ void teacher_portal::set_time(){
 	cancel();
 }
 
+void teacher_portal::delete_course(){
+	vector<string> del_course;
+	for (int i = 0; i < checkboxes.size(); i++) {
+		if (checkboxes[i]->isChecked()) {
+			del_course.push_back(checkboxes[i]->text().toLocal8Bit().constData());
+		}
+	}
+	if (del_course.empty()) {
+		QMessageBox::warning(this, "hint", "please choose at least one course");
+		return;
+	}
+	for (int i = 0; i < del_course.size(); i++) {
+		for (int j = 0; j < mycourses.size(); j++) {
+			if (del_course[i] == mycourses[j].name) {
+				QSqlQuery query;
+				for (int k = 0; k < mycourses[j].prerequisites.size(); k++) {
+					for (int l = 0; l < mycourses.size(); l++) {
+						for (int m = 0; m < mycourses[l].prerequisites.size(); m++)
+							if (mycourses[l].prerequisites[m] == del_course[i]) {
+								mycourses[l].prerequisites.erase(mycourses[l].prerequisites.begin() + m);
+								mycourses[l].prerequisites.push_back(mycourses[j].prerequisites[k]);
+								string pres = "";
+								for (int n = 0; n < mycourses[l].prerequisites.size(); n++) {
+									pres += mycourses[l].prerequisites[n];
+									if (n != mycourses[l].prerequisites.size() - 1)
+										pres += ",";
+								}
+								QString sql = QString("UPDATE [course_manage].[dbo].[Table_course] SET Prerequisites = '%1' WHERE No = %2")
+									.arg(QString::fromLocal8Bit(pres.c_str())).arg(mycourses[l].no);
+								query.exec(sql);
+								break;
+							}
+					}
+				}
+				QString sql = QString("DELETE FROM [course_manage].[dbo].[Table_course] WHERE No = %1").arg(mycourses[j].no);
+				query.exec(sql);
+				mycourses.erase(mycourses.begin() + j);
+			}
+		}
+	}
+	index.clear();
+	for (int i = 0; i < mycourses.size(); i++) {
+		index[i] = mycourses[i].no;
+	}
+	graph_set(aGraphl, mycourses);
+	for (int i = 0; i < aGraphl->VerticesNum(); i++) {
+		calpath(*aGraphl, i, 0);
+		aGraphl->path[i] = maxn;
+		maxn = -1;
+	}
+	//delete indegree;
+	indegree = new int[aGraphl->VerticesNum()];
+	for (int i = 0; i < aGraphl->VerticesNum(); i++)
+		indegree[i] = aGraphl->Indegree[i];
+	QMessageBox::information(this, "hint", "delete succeed", QMessageBox::Ok);
+	cancel();
+}
+
+void teacher_portal::list_student(){
+	string text1 = "取消 ";
+	QPushButton* add1 = new QPushButton(QString::fromLocal8Bit(text1));
+	add1->setStyleSheet("background-color:rgb(255,231,235)");
+	ui.verticalLayout->addWidget(add1);
+	connect(add1, &QPushButton::clicked, this, &teacher_portal::cancel);
+	QSqlQuery query;
+	query.exec("SELECT COUNT(*) FROM [course_manage].[dbo].[Table_login] WHERE Role='2'");
+	QTableWidget* tablelist = new QTableWidget(4, 3);
+	while(query.next()) {
+		tablelist->setRowCount(query.value(0).toInt());
+	}
+	QStringList colHeaders;
+	colHeaders << "ID" << "Password" << "Registration time";
+	tablelist->setHorizontalHeaderLabels(colHeaders);
+	int i = 0;
+	if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_login]")) {
+		while (query.next()) {
+			if (query.value(2).toString() == "2") {
+				tablelist->setItem(i, 0, new QTableWidgetItem(query.value(0).toString()));
+				tablelist->setItem(i, 1, new QTableWidgetItem(query.value(1).toString()));
+				tablelist->setItem(i, 2, new QTableWidgetItem(query.value(3).toDate().toString()));
+				i++;
+			}
+		}
+	}
+	//tablelist->resizeColumnsToContents();
+	tablelist->setColumnWidth(0, 200);
+	tablelist->setColumnWidth(1, 300);
+	tablelist->setColumnWidth(2, 400);
+	tablelist-> setMinimumSize(QSize(920, 150));
+	mainLayout->addWidget(tablelist);
+	ui.add->setDisabled(true);
+	ui.to_set->setDisabled(true);
+	ui.del->setDisabled(true);
+	ui.list->setDisabled(true);
+}
+
+
 bool teacher_portal::read_in(vector<course>& mycourses) {
 	mycourses.clear();
-	QString path = QFileDialog::getOpenFileName(this, "OPEN", "../", "CSV(*.csv)");//设置文件路径 文件格式
+	/*QString path = QFileDialog::getOpenFileName(this, "OPEN", "../", "CSV(*.csv)");//设置文件路径 文件格式
 
 	if (path.isEmpty() == false) {//路径正确
 		filepath = path.toStdString();
@@ -351,7 +487,57 @@ bool teacher_portal::read_in(vector<course>& mycourses) {
 		csv_data.close();
 		return true;
 	}
+	return false;*/
+
+	if (!OpenDatabase()) {
+		return false;
+	}
+	QSqlQuery query;
+	if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_course]"))
+	{
+		int count = 0;
+		istringstream sin;         //将整行字符串line读入到字符串istringstream中
+		while (query.next())
+		{
+			course tmp;
+			tmp.no = query.value(0).toInt();
+			tmp.name = query.value(1).toString().toLocal8Bit().constData();
+			tmp.credits = query.value(2).toFloat();
+			tmp.hours = query.value(3).toInt();
+			tmp.sort = query.value(4).toString().toStdString();
+			string pres = query.value(5).toString().toLocal8Bit().constData();
+			if (!pres.empty()) {
+				sin.clear();
+				sin.str(pres);
+				string word;
+				while (getline(sin, word, ',')) //将字符串流sin中的字符读到word字符串中，以逗号为分隔符
+				{
+					tmp.prerequisites.push_back(word); //将每一格中的数据逐个push
+				}
+			}
+			mycourses.push_back(tmp);
+			index[count++] = tmp.no;
+		}
+		return true;
+	}
 	return false;
+}
+
+bool teacher_portal::OpenDatabase() {
+	QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");   //数据库驱动类型为SQL Server
+	qDebug() << "ODBC driver" << db.isValid();
+	db.setHostName("localhost");                        //选择本地主机，通用（最好不写数据库实例名）
+	db.setDatabaseName("dscs");                            //设置数据源名称（ODBC数据源名称）
+	db.setUserName("dscs");                               //登录用户
+	db.setPassword("134298");                           //密码
+
+	if (!db.open())                                      //打开数据库失败
+	{
+		qDebug() << db.lastError().text();
+		QMessageBox::critical(0, QObject::tr("Database error"), db.lastError().text());
+		return false;                                   //打开失败
+	}
+	return true;
 }
 
 void teacher_portal::calpath(Graph& G, int oneVertex, int length) {

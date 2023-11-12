@@ -44,6 +44,8 @@ void QtWidgetsApplication2::set_time_limit(const int t) {
         }
         QLabel* label1 = new QLabel(QString::fromLocal8Bit("每学期学分限制：") + QString::number(time_limit));
         ui.layout_label->addWidget(label1);
+        if (term == 9)
+            return;
         map<string, course>::iterator iter;
         iter = mcourse.begin();
         string warning = "In next term:";
@@ -203,7 +205,7 @@ void QtWidgetsApplication2::sh(){
         msgBox.addButton(QString::fromLocal8Bit("系统生成  "), QMessageBox::NoRole);
         int check = msgBox.exec();
 
-        QScrollArea* scrollArea;
+       // QScrollArea* scrollArea;
         QWidget* contentWidget;
         string text1 = "确认选课 ";
         string text2 = "取消选课 ";
@@ -215,18 +217,23 @@ void QtWidgetsApplication2::sh(){
         ui.layout_button->addWidget(add1);
         ui.layout_button->addWidget(add2);
         ui.layout_label->addWidget(label1);
-        scrollArea = new QScrollArea(ui.widget);
-        scrollArea->setWidgetResizable(true);
-        contentWidget = new QWidget(scrollArea);
-        scrollArea->setWidget(contentWidget);
+        //scrollArea = new QScrollArea(ui.widget);
+        autoScroll *scrollauto = new autoScroll(ui.widget);
+        //scrollArea->setWidgetResizable(true);
+        //contentWidget = new QWidget(scrollArea);
+        contentWidget=new QWidget(scrollauto);
+        scrollauto->setWidget(contentWidget);
+       // scrollArea->setWidget(contentWidget);
 
         layout = new QVBoxLayout(contentWidget);
 
         // 设置滚动区域为当前小部件的子对象
-        scrollArea->setParent(ui.widget);
+        //scrollArea->setParent(ui.widget);
+        scrollauto->setParent(ui.widget);
 
         // 将 contentWidget 添加到当前小部件的布局中
-        mainLayout->addWidget(scrollArea);
+       // mainLayout->addWidget(scrollArea);
+        mainLayout->addWidget(scrollauto);
         if (check == 0) {
             for (int i = 0; i < aGraphl->VerticesNum(); i++)
                 if (aGraphl->Indegree[i] == 0) {
@@ -524,7 +531,7 @@ void QtWidgetsApplication2::cancel() {
     term = 1;
     mcourse.clear();
     checkboxes.clear();
-    tables.clear();
+    //tables.clear();
     scourse = stack<course>();
     for (int i = 0; i < aGraphl->VerticesNum(); i++)
         indegree[i] = aGraphl->Indegree[i];
@@ -560,14 +567,14 @@ void QtWidgetsApplication2::generate_table() {
 
     if (outputFile.is_open()) {
         // 遍历二维数组并将数据写入文件
-        for (const table& t : tables) {
-            outputFile<<"term "<<t.term << "\n";
+        for (int i = 0; i < tables.size();i++) {
+            outputFile<<"term "<<tables[i]->term << "\n";
             outputFile << ","<<"Mon" <<", " << "Tue" << ", " << "Wed" << ", " << "Thu" << ", " << "Fri"<<"\n";
-            for (int i = 0; i < 4; i++) {
-                outputFile << i + 1 << ",";
-                for (int j = 0; j < 5; j++) {
+            for (int j = 0; j < 4; j++) {
+                outputFile << j + 1 << ",";
+                for (int k = 0; k < 5; k++) {
                     // 写入一个值后，加上逗号分隔
-                    outputFile << t.course_table[i][j].course_name << ",";
+                    outputFile << tables[i]->course_table[j][k].course_name << ",";
                 }
                 // 在每行末尾移除额外的逗号，添加换行符
                 outputFile.seekp(-1, std::ios_base::cur); // 移除最后一个逗号
@@ -583,7 +590,7 @@ void QtWidgetsApplication2::generate_table() {
 
 bool QtWidgetsApplication2::read_in(vector<course>& mycourses) {
     mycourses.clear();
-    QString path = QFileDialog::getOpenFileName(this, "OPEN", "../", "CSV(*.csv)");//设置文件路径 文件格式
+    /*QString path = QFileDialog::getOpenFileName(this, "OPEN", "../", "CSV(*.csv)");//设置文件路径 文件格式
 
     if (path.isEmpty() == false) {//路径正确
         ifstream csv_data(path.toStdString(), ios::in);
@@ -628,7 +635,57 @@ bool QtWidgetsApplication2::read_in(vector<course>& mycourses) {
         csv_data.close();
         return true;
     }
+    return false;*/
+
+    if (!OpenDatabase()) {
+        return false;
+    }
+    QSqlQuery query;
+    if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_course]"))
+    {
+        int count = 0;
+        istringstream sin;         //将整行字符串line读入到字符串istringstream中
+        while (query.next())
+        {
+            course tmp;
+            tmp.no = query.value(0).toInt();
+            tmp.name = query.value(1).toString().toLocal8Bit().constData();
+            tmp.credits = query.value(2).toFloat();
+            tmp.hours = query.value(3).toInt();
+            tmp.sort = query.value(4).toString().toStdString();
+            string pres = query.value(5).toString().toLocal8Bit().constData();
+            if (!pres.empty()) {
+                sin.clear();
+                sin.str(pres);
+                string word;
+                while (getline(sin, word, ',')) //将字符串流sin中的字符读到word字符串中，以逗号为分隔符
+                {
+                    tmp.prerequisites.push_back(word); //将每一格中的数据逐个push
+                }
+            }
+            mycourses.push_back(tmp);
+            index[count++] = tmp.no;
+        }  
+        return true;
+    }
     return false;
+}
+
+bool QtWidgetsApplication2::OpenDatabase(){
+    QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");   //数据库驱动类型为SQL Server
+    qDebug() << "ODBC driver" << db.isValid();
+    db.setHostName("localhost");                        //选择本地主机，通用（最好不写数据库实例名）
+    db.setDatabaseName("dscs");                            //设置数据源名称（ODBC数据源名称）
+    db.setUserName("dscs");                               //登录用户
+    db.setPassword("134298");                           //密码
+
+    if (!db.open())                                      //打开数据库失败
+    {
+        qDebug() << db.lastError().text();
+        QMessageBox::critical(0, QObject::tr("Database error"), db.lastError().text());
+        return false;                                   //打开失败
+    }
+    return true;
 }
 
 bool QtWidgetsApplication2::graph_set(Graphl*& G, vector<course>& mycourses) {
@@ -708,11 +765,13 @@ void QtWidgetsApplication2::del_redundancy() {
 }
 
 void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) {
-    table* t = new table(term);
+    //table* t = new table(term);
+    dropTable *t1= new dropTable(mycourses, term, time_limit);
     while (!scourse.empty()) {
         course V = scourse.top();
         scourse.pop();                     //一个顶点出队
-        t->set_table(V);
+        //t->set_table(V);
+        t1->set_table(V);
         int no;
         for (auto& pair : index) {
             if (pair.second == V.no) {
@@ -739,15 +798,18 @@ void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) 
             }
         }
     }
-    tables.push_back(*t);
+    tables.push_back(t1);
     QLabel* spaceLabel = new QLabel(" ");
     layout->addWidget(spaceLabel);
     QString text = QString::fromLocal8Bit("第 ") + QString::number(term) + QString::fromLocal8Bit("学期 ");
     QLabel* label = new QLabel(text);
     layout->addWidget(label);
-    QTableWidget* ta = t->show_table();
-    ta->setMinimumSize(QSize(920, 150));
-    layout->addWidget(ta);
+    //QTableWidget* ta = t->show_table();
+    //ta->setMinimumSize(QSize(920, 150));
+    t1->set_item();
+    //layout->addWidget(ta);
+    layout->addWidget(t1->ltime);
+    layout->addWidget(t1);
     for (int i = 0; i < 3; i++) {
         QLabel* spaceLabel = new QLabel(" ");
         layout->addWidget(spaceLabel);

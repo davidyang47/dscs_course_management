@@ -37,6 +37,8 @@ public:
     QPushButton *to_set;
     QWidget *verticalLayoutWidget;
     QVBoxLayout *verticalLayout;
+    QPushButton *del;
+    QPushButton *list;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -119,6 +121,20 @@ public:
         verticalLayout->setObjectName("verticalLayout");
         verticalLayout->setSizeConstraint(QLayout::SetDefaultConstraint);
         verticalLayout->setContentsMargins(0, 0, 0, 0);
+        del = new QPushButton(centralwidget);
+        del->setObjectName("del");
+        del->setGeometry(QRect(460, 170, 100, 30));
+        del->setFont(font);
+        del->setAutoFillBackground(false);
+        del->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 231, 235);\n"
+"alternate-background-color: rgb(255, 28, 89);"));
+        list = new QPushButton(centralwidget);
+        list->setObjectName("list");
+        list->setGeometry(QRect(830, 170, 40, 30));
+        list->setFont(font);
+        list->setAutoFillBackground(false);
+        list->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 231, 235);\n"
+"alternate-background-color: rgb(255, 28, 89);"));
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -143,6 +159,8 @@ public:
         label->setText(QCoreApplication::translate("MainWindow", "\346\225\231    \345\270\210    \347\253\257", nullptr));
         add->setText(QCoreApplication::translate("MainWindow", "\345\212\240 \350\257\276", nullptr));
         to_set->setText(QCoreApplication::translate("MainWindow", "\351\200\211 \350\257\276 \350\256\276 \347\275\256", nullptr));
+        del->setText(QCoreApplication::translate("MainWindow", "\345\210\240 \350\257\276", nullptr));
+        list->setText(QCoreApplication::translate("MainWindow", "\345\255\246 \347\224\237", nullptr));
     } // retranslateUi
 
 };

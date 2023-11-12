@@ -9,7 +9,7 @@
 #include <windows.h>
 using namespace std;
 
-struct arrange {
+struct arrange1 {
     string course_name;
     //string teacher_name;
     string course_time;
@@ -19,7 +19,7 @@ class table {
 public:
     int term;
     vector<course> courses;
-    arrange course_table[4][5];
+    arrange1 course_table[4][5];
     table() {
         term = 0;
         courses.clear();
@@ -55,7 +55,7 @@ public:
                 else
                     j = rand() % 5;
                 if (c.hours < 96)
-                    for (int k = -1; k < 1; k++) {
+                    for (int k = -1; k < 2; k++) {
                         it = find(time.begin(), time.end(), j + k);
                         if (it != time.end())
                             break;

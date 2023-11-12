@@ -54,6 +54,12 @@
     <QtMoc Include="teacher_portal.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="droptable.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="autoScroll.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graph.h">
@@ -63,9 +69,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="course.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

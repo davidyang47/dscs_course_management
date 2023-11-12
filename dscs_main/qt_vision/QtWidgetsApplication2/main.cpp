@@ -106,42 +106,75 @@ private:
         if (users.contains(username)) {
             return false; // Username already exists
         }
-
         users[username] = password;
-        QString id = QString::fromStdString(to_string(group->checkedId()));
-        QFile file("users.txt");
-        if (file.open(QIODevice::Append | QIODevice::Text)) {
-            QTextStream out(&file);
-            out << username << " " << password <<" "<<id<<"\n";
-            file.close();
-            return true;
-        }
+        QString role = QString::fromStdString(to_string(group->checkedId()));
+        //QFile file("users.txt");
+        //if (file.open(QIODevice::Append | QIODevice::Text)) {
+        //    QTextStream out(&file);
+        //    out << username << " " << password <<" "<<id<<"\n";
+        //    file.close();
+        //    return true;
+        //}
+        QSqlQuery query;
+        QString tmp = QString("INSERT INTO [course_manage].[dbo].[Table_login] "
+            " (ID, Password, Role, [Registration time]) "
+            "VALUES ('%1', %2, '%3', GETDATE())")
+            .arg(username).arg(password).arg(role);
 
+        if (query.exec(tmp)) {
+			return true;
+		}
         return false;
     }
     void loadUsers() {
-        QFile file("users.txt");
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            while (!in.atEnd()) {
-                QString line = in.readLine();
-                QStringList parts = line.split(" ");
-                if (parts.length() == 3) {
-                    users[parts[0]] = parts[1];
-                }
-            }
-            file.close();
-        }
+        //QFile file("users.txt");
+        //if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        //    QTextStream in(&file);
+        //    while (!in.atEnd()) {
+        //        QString line = in.readLine();
+        //        QStringList parts = line.split(" ");
+        //        if (parts.length() == 3) {
+        //            users[parts[0]] = parts[1];
+        //        }
+        //    }
+        //    file.close();
+        //}
+        OpenDatabase();
+        QSqlQuery query;
+        if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_login]")) {
+            while (query.next())
+            {
+				QString username = query.value(0).toString();
+				QString password = query.value(1).toString();
+				users[username] = password;
+			}
+		}
     }
     void setInitialWindowSize() {
         resize(1000, 500); // 设置初始窗口大小
         setMinimumSize(400, 200); // 设置最小窗口大小
     }
+    bool OpenDatabase() {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");   //数据库驱动类型为SQL Server
+        qDebug() << "ODBC driver" << db.isValid();
+        db.setHostName("localhost");                        //选择本地主机，通用（最好不写数据库实例名）
+        db.setDatabaseName("dscs");                            //设置数据源名称（ODBC数据源名称）
+        db.setUserName("dscs");                               //登录用户
+        db.setPassword("134298");                           //密码
+
+        if (!db.open())                                      //打开数据库失败
+        {
+            qDebug() << db.lastError().text();
+            QMessageBox::critical(0, QObject::tr("Database error"), db.lastError().text());
+            return false;                                   //打开失败
+        }
+        return true;
+    }
+
     QLineEdit* usernameLineEdit;
     QLineEdit* passwordLineEdit;
     QButtonGroup* group;
     QMap<QString, QString> users; // Username-Password map
-   // LoginWindow* loginWindow; // 登录界面实例
 };
 
 // 登录界面类
@@ -241,18 +274,30 @@ private:
         tp->close();
 	}
     void loadUsers() {
-        QFile file("users.txt");
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            while (!in.atEnd()) {
-                QString line = in.readLine();
-                QStringList parts = line.split(" ");
-                if (parts.length() == 3) {
-                    users[parts[0]] = parts[1];
-                    identity[parts[0]] = parts[2];
-                }
+        //QFile file("users.txt");
+        //if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        //    QTextStream in(&file);
+        //    while (!in.atEnd()) {
+        //        QString line = in.readLine();
+        //        QStringList parts = line.split(" ");
+        //        if (parts.length() == 3) {
+        //            users[parts[0]] = parts[1];
+        //            identity[parts[0]] = parts[2];
+        //        }
+        //    }
+        //    file.close();
+        //}
+        OpenDatabase();
+        QSqlQuery query;
+        if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_login]")) {
+            while (query.next())
+            {
+                QString username = query.value(0).toString();
+                QString password = query.value(1).toString();
+                QString role = query.value(2).toString();
+                users[username] = password;
+                identity[username] = role;
             }
-            file.close();
         }
     }
     bool authenticateUser(const QString& username, const QString& password) {
@@ -266,12 +311,28 @@ private:
         time_limit = time;
         sp->set_time_limit(time_limit);
     }
+    bool OpenDatabase() {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");   //数据库驱动类型为SQL Server
+        qDebug() << "ODBC driver" << db.isValid();
+        db.setHostName("localhost");                        //选择本地主机，通用（最好不写数据库实例名）
+        db.setDatabaseName("dscs");                            //设置数据源名称（ODBC数据源名称）
+        db.setUserName("dscs");                               //登录用户
+        db.setPassword("134298");                           //密码
+
+        if (!db.open())                                      //打开数据库失败
+        {
+            qDebug() << db.lastError().text();
+            QMessageBox::critical(0, QObject::tr("Database error"), db.lastError().text());
+            return false;                                   //打开失败
+        }
+        return true;
+    }
 
     int time_limit;
     QLineEdit* usernameLineEdit;
     QLineEdit* passwordLineEdit;
     QMap<QString, QString> users; // Username-Password map
-    QMap<QString, QString> identity;
+    QMap<QString, QString> identity;   //1 教师 2 学生
     RegisterWindow registerWindow; // 注册界面实例
     QtWidgetsApplication2* sp;
     teacher_portal* tp;

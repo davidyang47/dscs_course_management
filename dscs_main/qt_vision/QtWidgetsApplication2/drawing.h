@@ -261,6 +261,13 @@ private:
         widget->setGeometry(QRect(20, 20, 250, 80));
         QLabel* label = new QLabel("search for");
         searchLineEdit = new QLineEdit(widget);
+
+        QStringList course_list;
+        for (int i = 0; i < mycourses.size(); i++) {
+            course_list << QString::fromLocal8Bit(mycourses[i].name);
+        }
+        QCompleter* completer = new QCompleter(course_list, this);
+        searchLineEdit->setCompleter(completer);
         layout->addWidget(label);
         layout->addWidget(searchLineEdit);
         QShortcut* key = new QShortcut(QKeySequence(Qt::Key_Return), this);//创建一个快捷键"Key_Return"键  回车检索

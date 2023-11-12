@@ -4,10 +4,16 @@
 
 #include <QtWidgets>
 #include "ui_QtWidgetsApplication2.h"
+#include<QtSql/qsqldatabase.h>
+#include<QtSql/qsqltablemodel.h>
+#include<QtSql/qsqlerror.h>
+#include<qsqlquery.h>//包含查询语言
 #include "course.h"
 #include "Graph.h"
 #include "Graphl.h"
-#include "table.h"
+//#include "table.h"
+#include "droptable.h"
+#include "autoScroll.h"
 #include "drawing.h"
 #include <bits/stdc++.h>
 #include <windows.h>
@@ -38,6 +44,7 @@ private slots:
 
 private:
     bool read_in(vector<course> &mycourses);
+    bool OpenDatabase();
     bool graph_set(Graphl*& G, vector<course>& mycourses);
     void calpath(Graph& G, int oneVertex, int length);
     void setCheckBox();
@@ -53,7 +60,7 @@ private:
     map<string, course> mcourse;  // 用于暂存课程名和课程的对应关系
     map<int, int> index;   //课程编号和图中序号的对应 前：图中序号 后：课程编号
     QVector<QCheckBox*> checkboxes;
-    vector<table> tables;
+    vector<dropTable*> tables;
     Drawing* d;
     QGridLayout* gridLayout;  //放置checkbox
     QLabel* hint_label;  //提醒可直接生成课表
