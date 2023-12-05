@@ -2,7 +2,7 @@
 extern int maxn;
 
 teacher_portal::teacher_portal(QWidget* parent)
-: QMainWindow(parent) 
+	: QMainWindow(parent)
 {
 	ui.setupUi(this);
 	mainLayout = new QVBoxLayout(ui.widget);
@@ -20,7 +20,11 @@ teacher_portal::teacher_portal(QWidget* parent)
 	connect(ui.back_to, &QPushButton::clicked, this, &teacher_portal::back_to_login);
 }
 
-teacher_portal::~teacher_portal(){}
+teacher_portal::~teacher_portal() {}
+
+void teacher_portal::set_status(QMap<QString, bool> status) {
+	this->status = status;
+}
 
 void teacher_portal::read() {
 	if (read_in(mycourses))
@@ -59,7 +63,7 @@ void teacher_portal::show_graph() {
 		//	delete d;
 		//	d = nullptr;
 		//}
-		if(d)
+		if (d)
 			d->close();
 		d = new Drawing(*aGraphl, mycourses, index);
 		d->show();
@@ -155,8 +159,8 @@ void teacher_portal::initial(int mode) {
 			vadd->addLayout(hno);
 			vadd->addLayout(hname);
 			vadd->addLayout(hcredits);
-			vadd->addLayout(htype);			
-			vadd->addWidget(lpre);		
+			vadd->addLayout(htype);
+			vadd->addWidget(lpre);
 			vadd->addLayout(gridLayout);
 			layout->addWidget(wadd);
 
@@ -171,7 +175,7 @@ void teacher_portal::initial(int mode) {
 			QVBoxLayout* time_v = new QVBoxLayout(time_w);
 			time_w->setGeometry(QRect(150, 50, 700, 200));
 			QHBoxLayout* time_h = new QHBoxLayout;
-			QLabel* former_time=new QLabel(QString::fromLocal8Bit("当前学分限制为:")+QString::number(time_limit));
+			QLabel* former_time = new QLabel(QString::fromLocal8Bit("当前学分限制为:") + QString::number(time_limit));
 			QLabel* change_time = new QLabel(QString::fromLocal8Bit("更改学分限制为:"));
 			QLineEdit* time_edit = new QLineEdit;
 			time_h->addWidget(change_time);
@@ -217,7 +221,7 @@ void teacher_portal::add_course() {
 		QMessageBox::warning(this, "hint", "please fill in all blanks");
 		return;
 	}
-	int sno= when_add[0]->text().toInt();
+	int sno = when_add[0]->text().toInt();
 	string sname = when_add[1]->text().toLocal8Bit().constData();
 	for (int i = 0; i < mycourses.size(); i++) {
 		if (mycourses[i].no == sno) {
@@ -325,7 +329,7 @@ void teacher_portal::back_to_login() {
 	emit back();
 }
 
-void teacher_portal::set_time(){
+void teacher_portal::set_time() {
 	int time = when_add[0]->text().toInt();
 	if (time < 0) {
 		QMessageBox::warning(this, "hint", "time should be positive");
@@ -334,7 +338,7 @@ void teacher_portal::set_time(){
 	if (time < 310) {
 		QMessageBox::StandardButton check;
 		check = QMessageBox::question(this, "hint", "time maybe too small, are you sure ?", QMessageBox::Yes | QMessageBox::No);
-		if(check==QMessageBox::No)
+		if (check == QMessageBox::No)
 			return;
 	}
 	time_limit = time;
@@ -342,7 +346,7 @@ void teacher_portal::set_time(){
 	cancel();
 }
 
-void teacher_portal::delete_course(){
+void teacher_portal::delete_course() {
 	vector<string> del_course;
 	for (int i = 0; i < checkboxes.size(); i++) {
 		if (checkboxes[i]->isChecked()) {
@@ -400,7 +404,7 @@ void teacher_portal::delete_course(){
 	cancel();
 }
 
-void teacher_portal::list_student(){
+void teacher_portal::list_student() {
 	string text1 = "取消 ";
 	QPushButton* add1 = new QPushButton(QString::fromLocal8Bit(text1));
 	add1->setStyleSheet("background-color:rgb(255,231,235)");
@@ -408,29 +412,34 @@ void teacher_portal::list_student(){
 	connect(add1, &QPushButton::clicked, this, &teacher_portal::cancel);
 	QSqlQuery query;
 	query.exec("SELECT COUNT(*) FROM [course_manage].[dbo].[Table_login] WHERE Role='2'");
-	QTableWidget* tablelist = new QTableWidget(4, 3);
-	while(query.next()) {
+	QTableWidget* tablelist = new QTableWidget(4, 4);
+	while (query.next()) {
 		tablelist->setRowCount(query.value(0).toInt());
 	}
 	QStringList colHeaders;
-	colHeaders << "ID" << "Password" << "Registration time";
+	colHeaders << "ID" << "Password" << "Registration time" << "status";
 	tablelist->setHorizontalHeaderLabels(colHeaders);
 	int i = 0;
 	if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_login]")) {
 		while (query.next()) {
 			if (query.value(2).toString() == "2") {
+				QString stu_id = query.value(0).toString();
 				tablelist->setItem(i, 0, new QTableWidgetItem(query.value(0).toString()));
 				tablelist->setItem(i, 1, new QTableWidgetItem(query.value(1).toString()));
 				tablelist->setItem(i, 2, new QTableWidgetItem(query.value(3).toDate().toString()));
+				QPushButton* forbid = new QPushButton(QString::fromLocal8Bit("禁用 "));
+				connect(forbid, &QPushButton::clicked, this, [=]() {stu_forbid(stu_id); });
+				tablelist->setCellWidget(i, 3, forbid);
 				i++;
 			}
 		}
 	}
 	//tablelist->resizeColumnsToContents();
 	tablelist->setColumnWidth(0, 200);
-	tablelist->setColumnWidth(1, 300);
-	tablelist->setColumnWidth(2, 400);
-	tablelist-> setMinimumSize(QSize(920, 150));
+	tablelist->setColumnWidth(1, 200);
+	tablelist->setColumnWidth(2, 300);
+	tablelist->setColumnWidth(3, 200);
+	tablelist->setMinimumSize(QSize(920, 150));
 	mainLayout->addWidget(tablelist);
 	ui.add->setDisabled(true);
 	ui.to_set->setDisabled(true);
@@ -521,6 +530,25 @@ bool teacher_portal::read_in(vector<course>& mycourses) {
 		return true;
 	}
 	return false;
+}
+
+void teacher_portal::stu_forbid(QString name) {
+	if (status[name]) {
+		status[name] = false;
+		QMessageBox::warning(this, "", QString::fromLocal8Bit("已禁用 "));
+		emit send_stu_status(name, false);
+		return;
+	}
+	else {
+		QMessageBox::StandardButton check;
+		check = QMessageBox::question(this, "confirm", QString::fromLocal8Bit("该学生已被禁用，是否解除? "), QMessageBox::Yes | QMessageBox::No);
+		if (check == QMessageBox::No) {
+			return;
+		}
+		status[name] = true;
+		emit send_stu_status(name, true);
+		return;
+	}
 }
 
 bool teacher_portal::OpenDatabase() {

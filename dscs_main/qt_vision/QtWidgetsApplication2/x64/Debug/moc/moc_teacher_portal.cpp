@@ -40,6 +40,9 @@ constexpr auto qt_meta_stringdata_CLASSteacher_portalENDCLASS = QtMocHelpers::st
     "",
     "send_time_changed",
     "time",
+    "send_stu_status",
+    "username",
+    "s",
     "read",
     "show_graph",
     "shut",
@@ -50,7 +53,9 @@ constexpr auto qt_meta_stringdata_CLASSteacher_portalENDCLASS = QtMocHelpers::st
     "cancel",
     "back_to_login",
     "set_time",
-    "list_student"
+    "list_student",
+    "stu_forbid",
+    "name"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -63,44 +68,48 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSteacher_portalENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      12,   14, // methods
+      14,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       2,       // signalCount
+       3,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   86,    2, 0x06,    1 /* Public */,
-       3,    1,   87,    2, 0x06,    2 /* Public */,
+       1,    0,   98,    2, 0x06,    1 /* Public */,
+       3,    1,   99,    2, 0x06,    2 /* Public */,
+       5,    2,  102,    2, 0x06,    4 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       5,    0,   90,    2, 0x08,    4 /* Private */,
-       6,    0,   91,    2, 0x08,    5 /* Private */,
-       7,    0,   92,    2, 0x08,    6 /* Private */,
-       8,    1,   93,    2, 0x08,    7 /* Private */,
-      10,    0,   96,    2, 0x08,    9 /* Private */,
-      11,    0,   97,    2, 0x08,   10 /* Private */,
-      12,    0,   98,    2, 0x08,   11 /* Private */,
-      13,    0,   99,    2, 0x08,   12 /* Private */,
-      14,    0,  100,    2, 0x08,   13 /* Private */,
-      15,    0,  101,    2, 0x08,   14 /* Private */,
+       8,    0,  107,    2, 0x08,    7 /* Private */,
+       9,    0,  108,    2, 0x08,    8 /* Private */,
+      10,    0,  109,    2, 0x08,    9 /* Private */,
+      11,    1,  110,    2, 0x08,   10 /* Private */,
+      13,    0,  113,    2, 0x08,   12 /* Private */,
+      14,    0,  114,    2, 0x08,   13 /* Private */,
+      15,    0,  115,    2, 0x08,   14 /* Private */,
+      16,    0,  116,    2, 0x08,   15 /* Private */,
+      17,    0,  117,    2, 0x08,   16 /* Private */,
+      18,    0,  118,    2, 0x08,   17 /* Private */,
+      19,    1,  119,    2, 0x08,   18 /* Private */,
 
  // signals: parameters
     QMetaType::Void,
     QMetaType::Void, QMetaType::Int,    4,
+    QMetaType::Void, QMetaType::QString, QMetaType::Bool,    6,    7,
 
  // slots: parameters
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::Int,    9,
+    QMetaType::Void, QMetaType::Int,   12,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
+    QMetaType::Void, QMetaType::QString,   20,
 
        0        // eod
 };
@@ -119,6 +128,10 @@ Q_CONSTINIT const QMetaObject teacher_portal::staticMetaObject = { {
         // method 'send_time_changed'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'send_stu_status'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QString, std::false_type>,
+        QtPrivate::TypeAndForceComplete<bool, std::false_type>,
         // method 'read'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'show_graph'
@@ -139,7 +152,10 @@ Q_CONSTINIT const QMetaObject teacher_portal::staticMetaObject = { {
         // method 'set_time'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'list_student'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'stu_forbid'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QString, std::false_type>
     >,
     nullptr
 } };
@@ -152,16 +168,18 @@ void teacher_portal::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _
         switch (_id) {
         case 0: _t->back(); break;
         case 1: _t->send_time_changed((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 2: _t->read(); break;
-        case 3: _t->show_graph(); break;
-        case 4: _t->shut(); break;
-        case 5: _t->initial((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 6: _t->add_course(); break;
-        case 7: _t->delete_course(); break;
-        case 8: _t->cancel(); break;
-        case 9: _t->back_to_login(); break;
-        case 10: _t->set_time(); break;
-        case 11: _t->list_student(); break;
+        case 2: _t->send_stu_status((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<bool>>(_a[2]))); break;
+        case 3: _t->read(); break;
+        case 4: _t->show_graph(); break;
+        case 5: _t->shut(); break;
+        case 6: _t->initial((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 7: _t->add_course(); break;
+        case 8: _t->delete_course(); break;
+        case 9: _t->cancel(); break;
+        case 10: _t->back_to_login(); break;
+        case 11: _t->set_time(); break;
+        case 12: _t->list_student(); break;
+        case 13: _t->stu_forbid((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -177,6 +195,13 @@ void teacher_portal::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _
             using _t = void (teacher_portal::*)(int );
             if (_t _q_method = &teacher_portal::send_time_changed; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 1;
+                return;
+            }
+        }
+        {
+            using _t = void (teacher_portal::*)(QString , bool );
+            if (_t _q_method = &teacher_portal::send_stu_status; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 2;
                 return;
             }
         }
@@ -202,13 +227,13 @@ int teacher_portal::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 12)
+        if (_id < 14)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 12;
+        _id -= 14;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 12)
+        if (_id < 14)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 12;
+        _id -= 14;
     }
     return _id;
 }
@@ -224,5 +249,12 @@ void teacher_portal::send_time_changed(int _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 1, _a);
+}
+
+// SIGNAL 2
+void teacher_portal::send_stu_status(QString _t1, bool _t2)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
+    QMetaObject::activate(this, &staticMetaObject, 2, _a);
 }
 QT_WARNING_POP

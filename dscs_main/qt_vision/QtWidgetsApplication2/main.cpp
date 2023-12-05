@@ -97,7 +97,7 @@ private:
         palette.setBrush(this->backgroundRole(), QBrush(background));
         this->setPalette(palette);
 
-       // setLayout(layout);
+        // setLayout(layout);
 
         connect(registerButton, &QPushButton::clicked, this, &RegisterWindow::handleRegisterButton);
         connect(switchToLoginButton, &QPushButton::clicked, this, &RegisterWindow::handleSwitchToLogin);
@@ -122,8 +122,8 @@ private:
             .arg(username).arg(password).arg(role);
 
         if (query.exec(tmp)) {
-			return true;
-		}
+            return true;
+        }
         return false;
     }
     void loadUsers() {
@@ -144,11 +144,11 @@ private:
         if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_login]")) {
             while (query.next())
             {
-				QString username = query.value(0).toString();
-				QString password = query.value(1).toString();
-				users[username] = password;
-			}
-		}
+                QString username = query.value(0).toString();
+                QString password = query.value(1).toString();
+                users[username] = password;
+            }
+        }
     }
     void setInitialWindowSize() {
         resize(1000, 500); // 设置初始窗口大小
@@ -198,6 +198,21 @@ private slots:
             if (identity[username] == "2") {
                 usernameLineEdit->clear();
                 passwordLineEdit->clear();
+                if (!status[username]) {
+                    this->show();
+                    QMessageBox::warning(this, "Login Failed", QString::fromLocal8Bit("您已被禁用，请联系辅导员 "));
+                    return;
+                }
+                else {
+                    if (!page[username]) {
+                        sp = new QtWidgetsApplication2(time_limit, username);
+                        connect(sp, &QtWidgetsApplication2::back, this, &LoginWindow::back_to_login);
+                        status[username] = true;
+                        page[username] = sp;
+                    }
+                    else
+                        sp = page[username];
+                }
                 sp->show();
             }
             else {
@@ -250,18 +265,20 @@ private:
         palette.setBrush(this->backgroundRole(), QBrush(background));
         this->setPalette(palette);
 
-        sp = new QtWidgetsApplication2(time_limit);
+        //sp = new QtWidgetsApplication2(time_limit);
         tp = new teacher_portal();
+        sp = nullptr;
         //setLayout(layout);
 
         QShortcut* key = new QShortcut(QKeySequence(Qt::Key_Return), this);//创建一个快捷键"Key_Return"键  回车登录
         connect(key, &QShortcut::activated, this, &LoginWindow::handleLoginButton);//连接到指定槽函数
-        connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLoginButton);  
-        connect(switchToRegisterButton, &QPushButton::clicked, this, &LoginWindow::handleSwitchToRegister);   
-        connect(&registerWindow, &RegisterWindow::registerSuccess, this, &LoginWindow::handleSwitchToLogin);  
-        connect(sp, &QtWidgetsApplication2::back, this, &LoginWindow::back_to_login);
+        connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLoginButton);
+        connect(switchToRegisterButton, &QPushButton::clicked, this, &LoginWindow::handleSwitchToRegister);
+        connect(&registerWindow, &RegisterWindow::registerSuccess, this, &LoginWindow::handleSwitchToLogin);
+        //connect(sp, &QtWidgetsApplication2::back, this, &LoginWindow::back_to_login);
         connect(tp, &teacher_portal::back, this, &LoginWindow::back_to_login);
         connect(tp, &teacher_portal::send_time_changed, this, &LoginWindow::time_change);
+        connect(tp, &teacher_portal::send_stu_status, this, &LoginWindow::status_chg);
     }
 
     void handleSwitchToLogin() {
@@ -269,10 +286,13 @@ private:
         registerWindow.hide(); // 隐藏注册界面
     }
     void back_to_login() {
-		this->show();
-        sp->close(); 
+        this->show();
+        sp->close();
         tp->close();
-	}
+    }
+    void status_chg(QString username, bool s) {
+        status[username] = s;
+    }
     void loadUsers() {
         //QFile file("users.txt");
         //if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -297,7 +317,18 @@ private:
                 QString role = query.value(2).toString();
                 users[username] = password;
                 identity[username] = role;
+                if (role == '2') {
+                    if (!sp) {
+                        status[username] = true;
+                        page[username] = nullptr;
+                    }
+                    else if (!status.contains(username)) {
+                        status[username] = true;
+                        page[username] = nullptr;
+                    }
+                }
             }
+            tp->set_status(status);
         }
     }
     bool authenticateUser(const QString& username, const QString& password) {
@@ -309,7 +340,11 @@ private:
     }
     void time_change(int time) {
         time_limit = time;
-        sp->set_time_limit(time_limit);
+        for (auto& pair : page.toStdMap()) {
+            if (pair.second)
+                pair.second->set_time_limit(time_limit);
+        }
+        //sp->set_time_limit(time_limit);
     }
     bool OpenDatabase() {
         QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");   //数据库驱动类型为SQL Server
@@ -336,6 +371,8 @@ private:
     RegisterWindow registerWindow; // 注册界面实例
     QtWidgetsApplication2* sp;
     teacher_portal* tp;
+    QMap<QString, bool> status;  //f 空指针  t 存在 用户名-状态
+    QMap<QString, QtWidgetsApplication2*> page; //用户名-页面
 };
 
 int main(int argc, char* argv[]) {

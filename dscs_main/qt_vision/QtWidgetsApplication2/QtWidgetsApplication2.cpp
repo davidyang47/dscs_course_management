@@ -6,17 +6,20 @@
 using namespace std;
 int maxn = -1;
 
-QtWidgetsApplication2::QtWidgetsApplication2(const int time_limit, QWidget *parent)
-    : QMainWindow(parent), time_limit(time_limit)
+QtWidgetsApplication2::QtWidgetsApplication2(const int time_limit, const QString username, QWidget* parent)
+    : QMainWindow(parent), time_limit(time_limit), username(username)
 {
     ui.setupUi(this);
     mainLayout = new QVBoxLayout(ui.widget);
     aGraphl = nullptr;
-    d=nullptr;
+    d = nullptr;
     gridLayout = nullptr;
     hint_label = nullptr;
     hours_count = 0;
     term = 1;
+    sort_courses.clear();
+    QString welcome = QString::fromLocal8Bit("欢迎您，") + username;
+    ui.statusBar->showMessage(welcome);
     connect(ui.read_in, &QPushButton::clicked, this, &QtWidgetsApplication2::rc);
     connect(ui.to_show, &QPushButton::clicked, this, &QtWidgetsApplication2::wc);
     connect(ui.to_manage, &QPushButton::clicked, this, &QtWidgetsApplication2::sh);
@@ -27,10 +30,14 @@ QtWidgetsApplication2::QtWidgetsApplication2(const int time_limit, QWidget *pare
 QtWidgetsApplication2::~QtWidgetsApplication2()
 {}
 
+bool QtWidgetsApplication2::operator<(const QtWidgetsApplication2& other) {
+    return (username < other.username);
+}
+
 void QtWidgetsApplication2::set_time_limit(const int t) {
     time_limit = t;
     QLayoutItem* child0;
-    if (ui.layout_label->takeAt(0) != 0) {
+    if (!ui.layout_label->isEmpty()) {
         while ((child0 = ui.layout_label->takeAt(0)) != 0)
         {
             //setParent为NULL，防止删除之后界面不消失
@@ -67,28 +74,29 @@ void QtWidgetsApplication2::set_time_limit(const int t) {
             total_time += iter->second.hours;
             iter++;
         }
+        QString hint = "user:" + username;
         if (course_time > time_limit) {
             warning += "but you can't choose them all, so you can't graduate with such pace, please reset or choose again!";
-            QMessageBox::warning(this, "hint", QString::fromLocal8Bit(warning));
+            QMessageBox::warning(this, hint, QString::fromLocal8Bit(warning));
             return;
         }
         if (total_time < time_limit) {
-            QMessageBox::warning(this, "hint", "you can choose all the course with such limit");
+            QMessageBox::warning(this, hint, "you can choose all the course with such limit");
             del_redundancy();
-            setCheckBox();
+            setCheckBox(0);
             return;
         }
         else {
-            QMessageBox::warning(this, "hint", "you can't generate directly now");
+            QMessageBox::warning(this, hint, "you can't generate directly now");
             del_redundancy();
-            setCheckBox();
+            setCheckBox(0);
         }
     }
 }
 
 void QtWidgetsApplication2::rc()
 {
-    if(read_in(mycourses))
+    if (read_in(mycourses))
     {
         graph_set(aGraphl, mycourses);
         //aGraphl = new Graphl(mycourses.size());
@@ -196,7 +204,7 @@ void QtWidgetsApplication2::wc()
     }
 }
 
-void QtWidgetsApplication2::sh(){
+void QtWidgetsApplication2::sh() {
     if (!mycourses.empty()) {
         QMessageBox msgBox;
         msgBox.setWindowTitle("confirm");
@@ -205,25 +213,25 @@ void QtWidgetsApplication2::sh(){
         msgBox.addButton(QString::fromLocal8Bit("系统生成  "), QMessageBox::NoRole);
         int check = msgBox.exec();
 
-       // QScrollArea* scrollArea;
+        // QScrollArea* scrollArea;
         QWidget* contentWidget;
         string text1 = "确认选课 ";
         string text2 = "取消选课 ";
-        QPushButton* add1 = new QPushButton(QString::fromLocal8Bit(text1));
+        generate_button = new QPushButton(QString::fromLocal8Bit(text1));
         QPushButton* add2 = new QPushButton(QString::fromLocal8Bit(text2));
-        add1->setStyleSheet("background-color:rgb(255,231,235)");
+        generate_button->setStyleSheet("background-color:rgb(255,231,235)");
         add2->setStyleSheet("background-color:rgb(255,231,235)");
         QLabel* label1 = new QLabel(QString::fromLocal8Bit("每学期学分限制：") + QString::number(time_limit));
-        ui.layout_button->addWidget(add1);
+        ui.layout_button->addWidget(generate_button);
         ui.layout_button->addWidget(add2);
         ui.layout_label->addWidget(label1);
         //scrollArea = new QScrollArea(ui.widget);
-        autoScroll *scrollauto = new autoScroll(ui.widget);
+        autoScroll* scrollauto = new autoScroll(ui.widget);
         //scrollArea->setWidgetResizable(true);
         //contentWidget = new QWidget(scrollArea);
-        contentWidget=new QWidget(scrollauto);
+        contentWidget = new QWidget(scrollauto);
         scrollauto->setWidget(contentWidget);
-       // scrollArea->setWidget(contentWidget);
+        // scrollArea->setWidget(contentWidget);
 
         layout = new QVBoxLayout(contentWidget);
 
@@ -240,9 +248,9 @@ void QtWidgetsApplication2::sh(){
                     mcourse[mycourses[i].name] = mycourses[i];
                     hours_count += mycourses[i].hours;
                 }
-            setCheckBox();
-            connect(add1, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_user);
-		}
+            setCheckBox(0);
+            connect(generate_button, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_user);
+        }
         else {
             for (int i = 0; i < mycourses.size(); i++)
                 if (mycourses[i].sort == "Y") {
@@ -266,7 +274,7 @@ void QtWidgetsApplication2::sh(){
             // 将网格布局添加到垂直布局
             layout->addLayout(gridLayout);
             mcourse.clear();
-            connect(add1, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_com);
+            connect(generate_button, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_com);
         }
         connect(add2, &QPushButton::clicked, this, &QtWidgetsApplication2::cancel);
         ui.to_manage->setDisabled(true);
@@ -372,13 +380,18 @@ void QtWidgetsApplication2::manage_user() {
             QMessageBox::information(this, "hint", "the course management is done");
             for (int i = 0; i < aGraphl->VerticesNum(); i++)
                 indegree[i] = aGraphl->Indegree[i];
-           QPushButton *table_button = new QPushButton(QString::fromLocal8Bit("生 成 课 表  "));
-           table_button->setStyleSheet("background-color:rgb(255,231,235)");
-           ui.layout_generate->addWidget(table_button);
-           connect(table_button, &QPushButton::clicked, this, &QtWidgetsApplication2::generate_table);
+            QPushButton* table_button = new QPushButton(QString::fromLocal8Bit("生 成 课 表  "));
+            table_button->setStyleSheet("background-color:rgb(255,231,235)");
+            ui.layout_generate->addWidget(table_button);
+            connect(table_button, &QPushButton::clicked, this, &QtWidgetsApplication2::generate_table);
             return;
         }
-        setCheckBox();
+        if (sort_courses.empty()) {
+            setCheckBox(0);
+        }
+        else {
+            setCheckBox(1);
+        }
     }
     else {
         QMessageBox::information(this, "hint", "the course management is done");
@@ -386,6 +399,41 @@ void QtWidgetsApplication2::manage_user() {
             indegree[i] = aGraphl->Indegree[i];
     }
 
+}
+
+void QtWidgetsApplication2::manage_user_sort() {
+    vector<string> course_names;
+    for (QCheckBox* checkBox : checkboxes) {
+        if (checkBox->isChecked()) {
+            QString optionText = checkBox->text();
+            QStringList stringList = optionText.split(" ");
+            optionText = stringList.first();
+            course_names.push_back(optionText.toLocal8Bit().constData());
+        }
+    }
+    for (int i = 0; i < course_names.size(); i++) {
+        for (int j = 0; j < sort_courses.size(); j++) {
+            if (sort_courses[j].name == course_names[i]) {
+                if (tables[term - 2]->time_used + sort_courses[j].hours <= time_limit) {
+                    tables[term - 2]->set_table(sort_courses[j]);
+                    sort_courses.erase(sort_courses.begin() + j);
+                }
+                else {
+                    QMessageBox::warning(this, "failed", QString::fromLocal8Bit("您本学期无法选择，尝试下学期再选择吧 "));
+                }
+                break;
+            }
+        }
+    }
+    tables[term - 2]->clearContents();
+    tables[term - 2]->set_item();
+    QString content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(tables[term - 2]->time_used);
+    tables[term - 2]->ltime->setText(content);
+    checkboxes.clear();
+    del_redundancy();
+    setCheckBox(0);
+    disconnect(generate_button, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_user_sort);
+    connect(generate_button, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_user);
 }
 
 void QtWidgetsApplication2::manage_com() {
@@ -421,25 +469,25 @@ void QtWidgetsApplication2::manage_com() {
             }
             iter++;
         }
-        for(int i=0;i<compul.size();i++)
-			mcourse.erase(compul[i].name);
+        for (int i = 0; i < compul.size(); i++)
+            mcourse.erase(compul[i].name);
 
         vector<course> result, tem_result;
         int max = 0;
 
-        findMaxCombination(mcourse, result, tem_result, max, 0, time_limit-hours_count, mcourse.begin());
-        for (const course &c:result) {
+        findMaxCombination(mcourse, result, tem_result, max, 0, time_limit - hours_count, mcourse.begin());
+        for (const course& c : result) {
             scourse.push(c);
             mcourse.erase(c.name);
         }
-        for(const course &c:compul){
+        for (const course& c : compul) {
             scourse.push(c);
         }
         table_output(1, course_names);
         hours_count = 0;
 
         iter = mcourse.begin();
-        string warning = "In term "+to_string(term);
+        string warning = "In term " + to_string(term);
         warning += "\n";
         int course_time = 0;
         while (iter != mcourse.end()) {
@@ -477,7 +525,7 @@ void QtWidgetsApplication2::manage_com() {
 }
 
 void QtWidgetsApplication2::cancel() {
-
+    disconnect(generate_button, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_user_sort);
     QLayoutItem* child;
     while ((child = ui.layout_button->takeAt(0)) != 0)
     {
@@ -531,7 +579,8 @@ void QtWidgetsApplication2::cancel() {
     term = 1;
     mcourse.clear();
     checkboxes.clear();
-    //tables.clear();
+    sort_courses.clear();
+    tables.clear();
     scourse = stack<course>();
     for (int i = 0; i < aGraphl->VerticesNum(); i++)
         indegree[i] = aGraphl->Indegree[i];
@@ -539,7 +588,7 @@ void QtWidgetsApplication2::cancel() {
 }
 
 void QtWidgetsApplication2::shut() {
-    if(d)
+    if (d)
         d->close();
     this->close();
 }
@@ -567,9 +616,9 @@ void QtWidgetsApplication2::generate_table() {
 
     if (outputFile.is_open()) {
         // 遍历二维数组并将数据写入文件
-        for (int i = 0; i < tables.size();i++) {
-            outputFile<<"term "<<tables[i]->term << "\n";
-            outputFile << ","<<"Mon" <<", " << "Tue" << ", " << "Wed" << ", " << "Thu" << ", " << "Fri"<<"\n";
+        for (int i = 0; i < tables.size(); i++) {
+            outputFile << "term " << tables[i]->term << "\n";
+            outputFile << "," << "Mon" << ", " << "Tue" << ", " << "Wed" << ", " << "Thu" << ", " << "Fri" << "\n";
             for (int j = 0; j < 4; j++) {
                 outputFile << j + 1 << ",";
                 for (int k = 0; k < 5; k++) {
@@ -665,13 +714,13 @@ bool QtWidgetsApplication2::read_in(vector<course>& mycourses) {
             }
             mycourses.push_back(tmp);
             index[count++] = tmp.no;
-        }  
+        }
         return true;
     }
     return false;
 }
 
-bool QtWidgetsApplication2::OpenDatabase(){
+bool QtWidgetsApplication2::OpenDatabase() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");   //数据库驱动类型为SQL Server
     qDebug() << "ODBC driver" << db.isValid();
     db.setHostName("localhost");                        //选择本地主机，通用（最好不写数据库实例名）
@@ -704,7 +753,7 @@ bool QtWidgetsApplication2::graph_set(Graphl*& G, vector<course>& mycourses) {
 
 void QtWidgetsApplication2::calpath(Graph& G, int oneVertex, int length) {
     if (G.Outdegree[oneVertex] == 0) {
-        maxn = max(length, maxn);
+        maxn = std::max(length, maxn);
         return;
     }
     for (int i = 0; i < G.Outdegree[oneVertex]; i++) {
@@ -713,28 +762,45 @@ void QtWidgetsApplication2::calpath(Graph& G, int oneVertex, int length) {
     }
 }
 
-void QtWidgetsApplication2::setCheckBox() {
-    if (hours_count > time_limit) {
-        gridLayout = new QGridLayout;
+void QtWidgetsApplication2::setCheckBox(int mode) {
+    if (!mode) {
+        if (hours_count > time_limit) {
+            gridLayout = new QGridLayout;
 
-        // 创建多选按钮并添加到网格布局
-        map<string, course>::iterator iter;
-        iter = mcourse.begin();
-        int i = 0;
-        while (iter != mcourse.end()) {
-            QString box_text = QString::fromLocal8Bit(iter->first) + " (" + QString::number(iter->second.hours) + ")";
+            // 创建多选按钮并添加到网格布局
+            map<string, course>::iterator iter;
+            iter = mcourse.begin();
+            int i = 0;
+            while (iter != mcourse.end()) {
+                QString box_text = QString::fromLocal8Bit(iter->first) + " (" + QString::number(iter->second.hours) + ")";
+                QCheckBox* checkBox = new QCheckBox(box_text);
+                gridLayout->addWidget(checkBox, i / 2, i % 2); // i / 2 行，i % 2 列
+                checkboxes.push_back(checkBox);
+                iter++;
+                i++;
+            }
+            // 将网格布局添加到垂直布局
+            layout->addLayout(gridLayout);
+        }
+        else {
+            hint_label = new QLabel("the table can be generated directly");
+            layout->addWidget(hint_label);
+        }
+    }
+    else {
+        hint_label = new QLabel(QString::fromLocal8Bit("请选择选修课: "));
+        layout->addWidget(hint_label);
+        gridLayout = new QGridLayout;
+        for (int i = 0; i < sort_courses.size(); i++) {
+            QString box_text = QString::fromLocal8Bit(sort_courses[i].name) + " (" + QString::number(sort_courses[i].hours) + ")";
             QCheckBox* checkBox = new QCheckBox(box_text);
             gridLayout->addWidget(checkBox, i / 2, i % 2); // i / 2 行，i % 2 列
             checkboxes.push_back(checkBox);
-            iter++;
-            i++;
         }
         // 将网格布局添加到垂直布局
         layout->addLayout(gridLayout);
-    }
-    else {
-        hint_label = new QLabel("the table can be generated directly");
-        layout->addWidget(hint_label);
+        disconnect(generate_button, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_user);
+        connect(generate_button, &QPushButton::clicked, this, &QtWidgetsApplication2::manage_user_sort);
     }
 }
 
@@ -766,7 +832,12 @@ void QtWidgetsApplication2::del_redundancy() {
 
 void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) {
     //table* t = new table(term);
-    dropTable *t1= new dropTable(mycourses, term, time_limit);
+    dropTable* t1 = new dropTable(mycourses, term, time_limit);
+    for (int i = 0; i < mycourses.size(); i++) {
+        if (mycourses[i].sort == "Y" && indegree[i] == 0 && std::find(sort_courses.begin(), sort_courses.end(), mycourses[i]) == sort_courses.end()) {
+            sort_courses.push_back(mycourses[i]);
+        }
+    }
     while (!scourse.empty()) {
         course V = scourse.top();
         scourse.pop();                     //一个顶点出队
@@ -782,7 +853,7 @@ void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) 
         //aGraphl->Mark[no] = VISITED;
         for (Edge e = aGraphl->FirstEdge(no); aGraphl->IsEdge(e); e = aGraphl->NextEdge(e)) {
             indegree[aGraphl->ToVertex(e)]--;  //所有与之相邻的顶点入度-1
-            if (indegree[aGraphl->ToVertex(e)] == 0 ) {
+            if (indegree[aGraphl->ToVertex(e)] == 0) {
                 if (!mode) {
                     if (mycourses[aGraphl->ToVertex(e)].sort != "Y") {
                         mcourse[mycourses[aGraphl->ToVertex(e)].name] = mycourses[aGraphl->ToVertex(e)];
@@ -798,6 +869,7 @@ void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) 
             }
         }
     }
+    //connect(t1, &dropTable::cascade_chg, this, &QtWidgetsApplication2::cascade_courseDrag);
     tables.push_back(t1);
     QLabel* spaceLabel = new QLabel(" ");
     layout->addWidget(spaceLabel);
@@ -826,11 +898,50 @@ void QtWidgetsApplication2::findMaxCombination(map<string, course>& data, vector
         return;
     }
 
-    findMaxCombination(data, result, tem_result, max, current, limit, next(it));  
+    findMaxCombination(data, result, tem_result, max, current, limit, next(it));
 
     if (current + it->second.hours < limit) {
-        tem_result.push_back(it->second); 
+        tem_result.push_back(it->second);
         findMaxCombination(data, result, tem_result, max, current + it->second.hours, limit, next(it));
         tem_result.pop_back();
+    }
+}
+
+void QtWidgetsApplication2::cascade_courseDrag(course course_name, int from, int to) {
+    vector<course> term_courses[8];
+    for (int i = 0; i < 8; i++) {
+        term_courses[i] = tables[i]->courses;
+    }
+    term_courses[from - 1].erase(std::find(term_courses[from - 1].begin(), term_courses[from - 1].end(), course_name));
+    vector<course> tmp;
+    if (to > from) {
+        stack<course> course_cascade;
+        course_cascade.push(course_name);
+        vector<string>::iterator it;
+        for (int i = to - 1; i < 8; i++) {
+            int timeused = tables[i]->time_used;
+            while (!course_cascade.empty()) {
+                course name = course_cascade.top();
+                course_cascade.pop();
+                for (int j = 0; j < term_courses[i].size(); j++) {
+                    it = std::find(term_courses[i][j].prerequisites.begin(), term_courses[i][j].prerequisites.end(), name.name);
+                    if (it != term_courses[i][j].prerequisites.end()) {
+                        timeused -= term_courses[i][j].hours;
+                        tmp.push_back(term_courses[i][j]);
+                        term_courses[i].erase(term_courses[i].begin() + j);
+                    }
+                }
+                if (timeused + name.hours <= time_limit) {
+                    term_courses[i].push_back(name);
+                }
+                else {
+                    //wrong
+                    return;
+                }
+            }
+            for (int j = 0; j < tmp.size(); j++) {
+                course_cascade.push(tmp[j]);
+            }
+        }
     }
 }

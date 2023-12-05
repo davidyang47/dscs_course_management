@@ -12,9 +12,8 @@
 using namespace std;
 
 struct arrange {
-	string course_name;
-	//string teacher_name;
-	string course_time;
+    string course_name;
+    string course_time;
 };
 
 class dropTable : public QTableWidget
@@ -25,10 +24,10 @@ public:
         setAcceptDrops(true);
         setDragEnabled(true);
     }
-    dropTable(const vector<course>& mycourses, const int term, const int time_limit, QWidget* parent = nullptr) 
-        :QTableWidget(parent), mycourses(mycourses), term(term), time_limit(time_limit){
-		setAcceptDrops(true);
-		setDragEnabled(true);
+    dropTable(const vector<course>& mycourses, const int term, const int time_limit, QWidget* parent = nullptr)
+        :QTableWidget(parent), mycourses(mycourses), term(term), time_limit(time_limit) {
+        setAcceptDrops(true);
+        setDragEnabled(true);
         setRowCount(4);
         setColumnCount(5);
         QStringList rowHeaders;
@@ -37,14 +36,14 @@ public:
         QStringList colHeaders;
         colHeaders << "Mon" << "Tue" << "Wed" << "Thu" << "Fri";
         setHorizontalHeaderLabels(colHeaders);
-		courses.clear();
-        ltime=nullptr;
+        courses.clear();
+        ltime = nullptr;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 5; j++) {
-				course_table[i][j].course_name = "";
-				course_table[i][j].course_time = "";
-			}
-		}
+                course_table[i][j].course_name = "";
+                course_table[i][j].course_time = "";
+            }
+        }
         time_used = 0;
     }
     dropTable(const dropTable& other) {
@@ -121,6 +120,8 @@ public:
     vector<course> courses;
     arrange course_table[4][5];
     QLabel* ltime;
+//signals:
+    //void cascade_chg(course course_name, int from, int to) {}
 
 protected:
     void mousePressEvent(QMouseEvent* event) {
@@ -143,7 +144,7 @@ protected:
     void dragEnterEvent(QDragEnterEvent* event) {
         dropTable* source =
             qobject_cast<dropTable*>(event->source());
-        if (source && source != this) {
+        if (source /* && source != this*/) {
             event->setDropAction(Qt::MoveAction);
             event->accept();
         }
@@ -152,7 +153,7 @@ protected:
     void dragMoveEvent(QDragMoveEvent* event) {
         dropTable* source =
             qobject_cast<dropTable*>(event->source());
-        if (source && source != this) {
+        if (source /* && source != this*/) {
             event->setDropAction(Qt::MoveAction);
             event->accept();
         }
@@ -161,22 +162,47 @@ protected:
     void dropEvent(QDropEvent* event) {
         dropTable* source =
             qobject_cast<dropTable*>(event->source());
-        if (source && source != this) {
-            QString content = "";
-            bool judge = false;
-            QString str = event->mimeData()->text();
-            QStringList list = str.split(" ");
-            str = list.first();
-            string name= str.toLocal8Bit().constData();
-            if (term < source->term) {
-                for (int i = 0; i < mycourses.size(); i++) {
-                    if (mycourses[i].name == name) {
-                        for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
-                            for (int k = 0; k < courses.size(); k++) {
-                                if (courses[k].name == mycourses[i].prerequisites[j]) {
-                                    content += QString::fromLocal8Bit("该学期有先修课: ") + QString::fromLocal8Bit(mycourses[i].prerequisites[j]) + "\n";
-                                    judge = true;
+        if (source /* && source != this*/) {
+            if (source != this) {
+                QString content = "";
+                bool judge = false;
+                QString str = event->mimeData()->text();
+                QStringList list = str.split(" ");
+                str = list.first();
+                string name = str.toLocal8Bit().constData();
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("confirm");
+                msgBox.setText(QString::fromLocal8Bit("请选择方式  "));
+                msgBox.addButton(QString::fromLocal8Bit("单独  "), QMessageBox::YesRole);
+                msgBox.addButton(QString::fromLocal8Bit("级联  "), QMessageBox::NoRole);
+                int check = msgBox.exec();
+                if (check == 0) {
+                    if (term < source->term) {
+                        for (int i = 0; i < mycourses.size(); i++) {
+                            if (mycourses[i].name == name) {
+                                for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
+                                    for (int k = 0; k < courses.size(); k++) {
+                                        if (courses[k].name == mycourses[i].prerequisites[j]) {
+                                            content += QString::fromLocal8Bit("该学期有先修课: ") + QString::fromLocal8Bit(mycourses[i].prerequisites[j]) + "\n";
+                                            judge = true;
+                                        }
+                                    }
                                 }
+                                if (judge) {
+                                    QMessageBox::warning(this, "failed", content);
+                                    //judge = false;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        vector<string>::iterator it;
+                        for (int i = 0; i < courses.size(); i++) {
+                            it = std::find(courses[i].prerequisites.begin(), courses[i].prerequisites.end(), name);
+                            if (it != courses[i].prerequisites.end()) {
+                                content += QString::fromLocal8Bit("该学期有后继课: ") + QString::fromLocal8Bit(courses[i].name) + "\n";
+                                judge = true;
                             }
                         }
                         if (judge) {
@@ -185,39 +211,44 @@ protected:
                             return;
                         }
                     }
+                    for (int i = 0; i < mycourses.size(); i++) {
+                        if (mycourses[i].name == name) {
+                            if (time_used + mycourses[i].hours > time_limit) {
+                                content = QString::fromLocal8Bit("需要学时: ") + QString::number(mycourses[i].hours) + QString::fromLocal8Bit("，剩余可用学时: ") + QString::number(time_limit - time_used);
+                                QMessageBox::warning(this, "failed", content);
+                                return;
+                            }
+                            set_table(mycourses[i]);
+                            break;
+                        }
+                    }
+                    source->del_item(name);
+                    clearContents();
+                    set_item();
+                    content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
+                    ltime->setText(content);
+                }
+                else {
+                    for (int i = 0; i < mycourses.size(); i++) {
+                        if (mycourses[i].name == name) {
+                            //emit cascade_chg(mycourses[i], source->term, term);
+                            return;
+                        }
+                    }
                 }
             }
             else {
-                vector<string>::iterator it;
-                for (int i = 0; i < courses.size(); i++) {
-                    it = std::find(courses[i].prerequisites.begin(), courses[i].prerequisites.end(), name);
-                    if (it != courses[i].prerequisites.end()) {
-                        content += QString::fromLocal8Bit("该学期有后继课: ") + QString::fromLocal8Bit(courses[i].name) + "\n";
-                        judge = true;
-                    }
+
+                //QTableWidgetItem* item = new QTableWidgetItem(source->selectedItems().first()->text());
+                if (course_table[currentRow()][currentColumn()].course_name == "") {
+                    course_table[currentRow()][currentColumn()].course_name = event->mimeData()->text().toLocal8Bit().constData();
+                    course_table[currentRow()][currentColumn()].course_time = "";
+                    clearContents();
+                    set_item();
                 }
-                if (judge) {
-                    QMessageBox::warning(this, "failed", content);
-                    //judge = false;
-                    return;
-                }
+
+                //setItem(currentRow(), currentColumn(), new QTableWidgetItem(event->mimeData()->text()));
             }
-            for (int i = 0; i < mycourses.size(); i++) {
-                if (mycourses[i].name == name) {
-                    if (time_used + mycourses[i].hours > time_limit) {
-                        content = QString::fromLocal8Bit("需要学时: ") + QString::number(mycourses[i].hours) + QString::fromLocal8Bit("，剩余可用学时: ") + QString::number(time_limit - time_used);
-						QMessageBox::warning(this, "failed", content);
-						return;
-					}
-                    set_table(mycourses[i]);
-                    break;
-                }
-            }
-            source->del_item(name);
-            clearContents();
-            set_item();
-            content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
-            ltime->setText(content);
             event->setDropAction(Qt::MoveAction);
             event->accept();
         }

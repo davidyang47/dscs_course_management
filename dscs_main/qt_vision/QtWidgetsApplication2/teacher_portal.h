@@ -18,15 +18,17 @@ using namespace std;
 
 class teacher_portal : public QMainWindow
 {
-	Q_OBJECT
+    Q_OBJECT
 
- public:
-	 teacher_portal(QWidget* parent = nullptr);
-	 ~teacher_portal();
+public:
+    teacher_portal(QWidget* parent = nullptr);
+    ~teacher_portal();
+    void set_status(QMap<QString, bool> status);
 
 signals:
-    void back();  
+    void back();
     void send_time_changed(int time);
+    void send_stu_status(QString username, bool s);
 
 private slots:
     void read();
@@ -39,6 +41,7 @@ private slots:
     void back_to_login();
     void set_time();
     void list_student();
+    void stu_forbid(QString name);
 
 private:
     bool read_in(vector<course>& mycourses);
@@ -51,13 +54,14 @@ private:
     QVector<QCheckBox*> checkboxes;
     vector<course> mycourses;
     Graphl* aGraphl;
-    map<int, int> index;   
+    map<int, int> index;
     Drawing* d;
     int time_limit;
     int* indegree;
-    string filepath;  
+    string filepath;
     QVector<QLineEdit*> when_add;
     QButtonGroup* c_type;
+    QMap<QString, bool> status;  //学生登陆状态
 };
 
 #endif // TEACHER_PORTAL_H
