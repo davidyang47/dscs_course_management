@@ -30,16 +30,6 @@ void teacher_portal::read() {
 	if (read_in(mycourses))
 	{
 		graph_set(aGraphl, mycourses);
-		//aGraphl = new Graphl(mycourses.size());
-		//for (int i = 0; i < mycourses.size(); i++) {
-		//	for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
-		//		for (int k = 0; k < mycourses.size(); k++) {
-		//			if (mycourses[k].name == mycourses[i].prerequisites[j]) {
-		//				aGraphl->setEdge(k, i, 1);
-		//			}
-		//		}
-		//	}
-		//}
 		for (int i = 0; i < aGraphl->VerticesNum(); i++) {
 			calpath(*aGraphl, i, 0);
 			aGraphl->path[i] = maxn;
@@ -58,11 +48,6 @@ void teacher_portal::read() {
 
 void teacher_portal::show_graph() {
 	if (!mycourses.empty()) {
-		//if (d) {
-		//	d->close();
-		//	delete d;
-		//	d = nullptr;
-		//}
 		if (d)
 			d->close();
 		d = new Drawing(*aGraphl, mycourses, index);
@@ -258,13 +243,6 @@ void teacher_portal::add_course() {
 	for (int i = 0; i < aGraphl->VerticesNum(); i++)
 		indegree[i] = aGraphl->Indegree[i];
 
-	//将tmp写入文件尾部
-	/*ofstream course_file(filepath, ios::app);
-	course_file << tmp.no << "," << tmp.name << "," << tmp.credits << "," << tmp.hours << "," << tmp.sort;
-	for (const string& prereq : tmp.prerequisites) {
-		course_file << "," << prereq;
-	}
-	course_file << "\n";*/
 	QSqlQuery query;
 	string pres = "";
 	for (int i = 0; i < tmp.prerequisites.size(); i++) {
@@ -366,6 +344,7 @@ void teacher_portal::delete_course() {
 						for (int m = 0; m < mycourses[l].prerequisites.size(); m++)
 							if (mycourses[l].prerequisites[m] == del_course[i]) {
 								mycourses[l].prerequisites.erase(mycourses[l].prerequisites.begin() + m);
+								m--;
 								mycourses[l].prerequisites.push_back(mycourses[j].prerequisites[k]);
 								string pres = "";
 								for (int n = 0; n < mycourses[l].prerequisites.size(); n++) {
@@ -383,6 +362,7 @@ void teacher_portal::delete_course() {
 				QString sql = QString("DELETE FROM [course_manage].[dbo].[Table_course] WHERE No = %1").arg(mycourses[j].no);
 				query.exec(sql);
 				mycourses.erase(mycourses.begin() + j);
+				j--;
 			}
 		}
 	}
@@ -396,7 +376,6 @@ void teacher_portal::delete_course() {
 		aGraphl->path[i] = maxn;
 		maxn = -1;
 	}
-	//delete indegree;
 	indegree = new int[aGraphl->VerticesNum()];
 	for (int i = 0; i < aGraphl->VerticesNum(); i++)
 		indegree[i] = aGraphl->Indegree[i];
@@ -447,57 +426,8 @@ void teacher_portal::list_student() {
 	ui.list->setDisabled(true);
 }
 
-
 bool teacher_portal::read_in(vector<course>& mycourses) {
 	mycourses.clear();
-	/*QString path = QFileDialog::getOpenFileName(this, "OPEN", "../", "CSV(*.csv)");//设置文件路径 文件格式
-
-	if (path.isEmpty() == false) {//路径正确
-		filepath = path.toStdString();
-		ifstream csv_data(filepath, ios::in);
-		string line;
-
-		if (!csv_data.is_open())
-		{
-			cout << "Error: opening file fail" << endl;
-			exit(1);
-		}
-
-		istringstream sin;         //将整行字符串line读入到字符串istringstream中
-		vector<string> words; //声明一个字符串向量
-		string word;
-
-		// 读取标题行
-		getline(csv_data, line);
-		int count = 0;
-		// 读取数据
-		while (getline(csv_data, line))
-		{
-			sin.clear();
-			sin.str(line);
-			words.clear();
-			while (getline(sin, word, ',')) //将字符串流sin中的字符读到word字符串中，以逗号为分隔符
-			{
-				words.push_back(word); //将每一格中的数据逐个push
-			}
-			course tmp;
-			tmp.no = stoi(words[0]);
-			tmp.name = words[1];
-			tmp.credits = stoi(words[2]);
-			tmp.hours = stoi(words[3]);
-			tmp.sort = words[4];
-			for (int i = 5; i < words.size(); i++)
-			{
-				tmp.prerequisites.push_back(words[i]);
-			}
-			mycourses.push_back(tmp);
-			index[count++] = tmp.no;
-		}
-		csv_data.close();
-		return true;
-	}
-	return false;*/
-
 	if (!OpenDatabase()) {
 		return false;
 	}

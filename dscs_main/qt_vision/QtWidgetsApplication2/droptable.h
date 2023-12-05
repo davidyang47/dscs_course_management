@@ -111,17 +111,43 @@ public:
             QString content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
             ltime = new QLabel(content);
         }
+        else {
+            QString content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
+            ltime->setText(content);
+        }
         // Resize the columns to fit the content
         resizeColumnsToContents();
         setMinimumSize(QSize(920, 150));
+    }
+    void del_item(string name) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 5; j++) {
+                if (course_table[i][j].course_name == name) {
+                    course_table[i][j].course_name = "";
+                    course_table[i][j].course_time = "";
+                }
+            }
+        }
+        for (int i = 0; i < mycourses.size(); i++) {
+            if (mycourses[i].name == name) {
+                vector<course>::iterator it = std::find(courses.begin(), courses.end(), mycourses[i]);
+                courses.erase(it);
+                time_used -= mycourses[i].hours;
+                break;
+            }
+        }
+        clearContents();
+        set_item();
+        QString content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
+        ltime->setText(content);
     }
     int term;
     int time_used;
     vector<course> courses;
     arrange course_table[4][5];
     QLabel* ltime;
-//signals:
-    //void cascade_chg(course course_name, int from, int to) {}
+signals:
+    void cascade_chg(course course_name, int from, int to);
 
 protected:
     void mousePressEvent(QMouseEvent* event) {
@@ -225,29 +251,25 @@ protected:
                     source->del_item(name);
                     clearContents();
                     set_item();
-                    content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
-                    ltime->setText(content);
+                    //content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
+                    //ltime->setText(content);
                 }
                 else {
                     for (int i = 0; i < mycourses.size(); i++) {
                         if (mycourses[i].name == name) {
-                            //emit cascade_chg(mycourses[i], source->term, term);
+                            emit cascade_chg(mycourses[i], source->term, term);
                             return;
                         }
                     }
                 }
             }
             else {
-
-                //QTableWidgetItem* item = new QTableWidgetItem(source->selectedItems().first()->text());
                 if (course_table[currentRow()][currentColumn()].course_name == "") {
                     course_table[currentRow()][currentColumn()].course_name = event->mimeData()->text().toLocal8Bit().constData();
                     course_table[currentRow()][currentColumn()].course_time = "";
                     clearContents();
                     set_item();
                 }
-
-                //setItem(currentRow(), currentColumn(), new QTableWidgetItem(event->mimeData()->text()));
             }
             event->setDropAction(Qt::MoveAction);
             event->accept();
@@ -268,28 +290,6 @@ private:
         if (drag->exec(Qt::MoveAction) == Qt::MoveAction) {
             qDebug() << "Success!";
         }
-    }
-    void del_item(string name) {
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 5; j++) {
-                if (course_table[i][j].course_name == name) {
-                    course_table[i][j].course_name = "";
-                    course_table[i][j].course_time = "";
-                }
-            }
-        }
-        for (int i = 0; i < mycourses.size(); i++) {
-            if (mycourses[i].name == name) {
-                vector<course>::iterator it = std::find(courses.begin(), courses.end(), mycourses[i]);
-                courses.erase(it);
-                time_used -= mycourses[i].hours;
-                break;
-            }
-        }
-        clearContents();
-        set_item();
-        QString content = QString::fromLocal8Bit("当前课时数为: ") + QString::number(time_used);
-        ltime->setText(content);
     }
 
     QPoint startPos;

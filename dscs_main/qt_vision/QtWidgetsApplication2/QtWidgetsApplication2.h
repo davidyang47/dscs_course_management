@@ -11,7 +11,6 @@
 #include "course.h"
 #include "Graph.h"
 #include "Graphl.h"
-//#include "table.h"
 #include "droptable.h"
 #include "autoScroll.h"
 #include "drawing.h"

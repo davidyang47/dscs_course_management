@@ -3,8 +3,6 @@
 #include <bits/stdc++.h>
 #include "QtWidgetsApplication2.h"
 #include "teacher_portal.h"
-//#include "LoginWindow.h"
-//#include "RegisterWindow.h"
 #include <QtWidgets>
 #include <QFile>
 #include <QTextStream>
@@ -97,8 +95,6 @@ private:
         palette.setBrush(this->backgroundRole(), QBrush(background));
         this->setPalette(palette);
 
-        // setLayout(layout);
-
         connect(registerButton, &QPushButton::clicked, this, &RegisterWindow::handleRegisterButton);
         connect(switchToLoginButton, &QPushButton::clicked, this, &RegisterWindow::handleSwitchToLogin);
     }
@@ -108,13 +104,6 @@ private:
         }
         users[username] = password;
         QString role = QString::fromStdString(to_string(group->checkedId()));
-        //QFile file("users.txt");
-        //if (file.open(QIODevice::Append | QIODevice::Text)) {
-        //    QTextStream out(&file);
-        //    out << username << " " << password <<" "<<id<<"\n";
-        //    file.close();
-        //    return true;
-        //}
         QSqlQuery query;
         QString tmp = QString("INSERT INTO [course_manage].[dbo].[Table_login] "
             " (ID, Password, Role, [Registration time]) "
@@ -127,18 +116,6 @@ private:
         return false;
     }
     void loadUsers() {
-        //QFile file("users.txt");
-        //if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        //    QTextStream in(&file);
-        //    while (!in.atEnd()) {
-        //        QString line = in.readLine();
-        //        QStringList parts = line.split(" ");
-        //        if (parts.length() == 3) {
-        //            users[parts[0]] = parts[1];
-        //        }
-        //    }
-        //    file.close();
-        //}
         OpenDatabase();
         QSqlQuery query;
         if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_login]")) {
@@ -265,17 +242,14 @@ private:
         palette.setBrush(this->backgroundRole(), QBrush(background));
         this->setPalette(palette);
 
-        //sp = new QtWidgetsApplication2(time_limit);
         tp = new teacher_portal();
         sp = nullptr;
-        //setLayout(layout);
 
         QShortcut* key = new QShortcut(QKeySequence(Qt::Key_Return), this);//创建一个快捷键"Key_Return"键  回车登录
         connect(key, &QShortcut::activated, this, &LoginWindow::handleLoginButton);//连接到指定槽函数
         connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLoginButton);
         connect(switchToRegisterButton, &QPushButton::clicked, this, &LoginWindow::handleSwitchToRegister);
         connect(&registerWindow, &RegisterWindow::registerSuccess, this, &LoginWindow::handleSwitchToLogin);
-        //connect(sp, &QtWidgetsApplication2::back, this, &LoginWindow::back_to_login);
         connect(tp, &teacher_portal::back, this, &LoginWindow::back_to_login);
         connect(tp, &teacher_portal::send_time_changed, this, &LoginWindow::time_change);
         connect(tp, &teacher_portal::send_stu_status, this, &LoginWindow::status_chg);
@@ -288,25 +262,12 @@ private:
     void back_to_login() {
         this->show();
         sp->close();
-        tp->close();
+        tp->hide();
     }
     void status_chg(QString username, bool s) {
         status[username] = s;
     }
     void loadUsers() {
-        //QFile file("users.txt");
-        //if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        //    QTextStream in(&file);
-        //    while (!in.atEnd()) {
-        //        QString line = in.readLine();
-        //        QStringList parts = line.split(" ");
-        //        if (parts.length() == 3) {
-        //            users[parts[0]] = parts[1];
-        //            identity[parts[0]] = parts[2];
-        //        }
-        //    }
-        //    file.close();
-        //}
         OpenDatabase();
         QSqlQuery query;
         if (query.exec("SELECT * FROM[course_manage].[dbo].[Table_login]")) {
@@ -384,155 +345,3 @@ int main(int argc, char* argv[]) {
 }
 
 #include "main.moc"
-
-//
-//
-//#include "QtWidgetsApplication2.h"
-//#include <QtWidgets/QApplication>
-//#include <QtWidgets/QWidget>
-//#include <QtWidgets/QVBoxLayout>
-//#include <QtWidgets/QLineEdit>
-//#include <QtWidgets/QPushButton>
-//#include <QtWidgets/QLabel>
-//#include <QtWidgets/QMessageBox>
-//#include <QFile>
-//#include <QTextStream>
-//
-//
-//class WelcomeWindow : public QWidget {
-//    Q_OBJECT
-//
-//public:
-//    WelcomeWindow(const QString& username, QWidget* parent = nullptr) : QWidget(parent) {
-//        QVBoxLayout* layout = new QVBoxLayout;
-//        QLabel* welcomeLabel = new QLabel("Welcome, " + username + "!", this);
-//        layout->addWidget(welcomeLabel);
-//        setLayout(layout);
-//    }
-//};
-//
-//class LoginRegisterSystem : public QWidget {
-//    Q_OBJECT
-//
-//public:
-//    LoginRegisterSystem(QWidget* parent = nullptr) : QWidget(parent) {
-//        setupUI();
-//        loadUsers();
-//        setInitialWindowSize(); // 设置初始窗口大小
-//    }
-//
-//private slots:
-//    void handleLoginButton() {
-//        QString username = usernameLineEdit->text();
-//        QString password = passwordLineEdit->text();
-//
-//        if (authenticateUser(username, password)) {
-//            // 登录成功，打开新窗口
-//            WelcomeWindow* welcomeWindow = new WelcomeWindow(username);
-//            welcomeWindow->show();
-//            this->close(); // 关闭登录窗口
-//        }
-//        else {
-//            QMessageBox::warning(this, "Login Failed", "Invalid username or password.");
-//        }
-//    }
-//
-//    void handleRegisterButton() {
-//        QString username = usernameLineEdit->text();
-//        QString password = passwordLineEdit->text();
-//
-//        if (username.isEmpty() || password.isEmpty()) {
-//            QMessageBox::warning(this, "Registration Failed", "Please enter both username and password.");
-//            return;
-//        }
-//
-//        if (registerUser(username, password)) {
-//            QMessageBox::information(this, "Registration Successful", "Account created for " + username + ".");
-//        }
-//        else {
-//            QMessageBox::warning(this, "Registration Failed", "Username already exists.");
-//        }
-//    }
-//
-//private:
-//    void setupUI() {
-//        QVBoxLayout* layout = new QVBoxLayout;
-//
-//        usernameLineEdit = new QLineEdit(this);
-//        passwordLineEdit = new QLineEdit(this);
-//        passwordLineEdit->setEchoMode(QLineEdit::Password);
-//
-//        QPushButton* loginButton = new QPushButton("Login", this);
-//        QPushButton* registerButton = new QPushButton("Register", this);
-//
-//        layout->addWidget(new QLabel("Username:", this));
-//        layout->addWidget(usernameLineEdit);
-//        layout->addWidget(new QLabel("Password:", this));
-//        layout->addWidget(passwordLineEdit);
-//        layout->addWidget(loginButton);
-//        layout->addWidget(registerButton);
-//
-//        setLayout(layout);
-//
-//        connect(loginButton, &QPushButton::clicked, this, &LoginRegisterSystem::handleLoginButton);
-//        connect(registerButton, &QPushButton::clicked, this, &LoginRegisterSystem::handleRegisterButton);
-//    }
-//
-//    void loadUsers() {
-//        QFile file("users.txt");
-//        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-//            QTextStream in(&file);
-//            while (!in.atEnd()) {
-//                QString line = in.readLine();
-//                QStringList parts = line.split(" ");
-//                if (parts.length() == 2) {
-//                    users[parts[0]] = parts[1];
-//                }
-//            }
-//            file.close();
-//        }
-//    }
-//
-//    bool authenticateUser(const QString& username, const QString& password) {
-//        return users.contains(username) && users[username] == password;
-//    }
-//
-//    bool registerUser(const QString& username, const QString& password) {
-//        if (users.contains(username)) {
-//            return false; // Username already exists
-//        }
-//
-//        users[username] = password;
-//
-//        QFile file("users.txt");
-//        if (file.open(QIODevice::Append | QIODevice::Text)) {
-//            QTextStream out(&file);
-//            out << username << " " << password << "\n";
-//            file.close();
-//            return true;
-//        }
-//
-//        return false;
-//    }
-//
-//    void setInitialWindowSize() {
-//        resize(400, 200); // 设置初始窗口大小
-//        setMinimumSize(400, 200); // 设置最小窗口大小
-//    }
-//
-//    QLineEdit* usernameLineEdit;
-//    QLineEdit* passwordLineEdit;
-//    QMap<QString, QString> users; // Username-Password map
-//};
-//
-//int main(int argc, char* argv[]) {
-//    QApplication app(argc, argv);
-//
-//    LoginRegisterSystem loginRegisterSystem;
-//    loginRegisterSystem.show();
-//
-//    return app.exec();
-//}
-//
-//#include "main.moc"
-//

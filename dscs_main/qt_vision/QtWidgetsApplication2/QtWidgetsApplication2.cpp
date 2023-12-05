@@ -99,16 +99,6 @@ void QtWidgetsApplication2::rc()
     if (read_in(mycourses))
     {
         graph_set(aGraphl, mycourses);
-        //aGraphl = new Graphl(mycourses.size());
-        //for (int i = 0; i < mycourses.size(); i++) {
-        //    for (int j = 0; j < mycourses[i].prerequisites.size(); j++) {
-        //        for (int k = 0; k < mycourses.size(); k++) {
-        //            if (mycourses[k].name == mycourses[i].prerequisites[j]) {
-        //                aGraphl->setEdge(k, i, 1);
-        //            }
-        //        }
-        //    }
-        //}
         for (int i = 0; i < aGraphl->VerticesNum(); i++) {
             calpath(*aGraphl, i, 0);
             aGraphl->path[i] = maxn;
@@ -125,71 +115,6 @@ void QtWidgetsApplication2::rc()
         ui.to_show->setDisabled(false);
         QMessageBox::warning(this, "hint", "failed");
     }
-    ////文件对话框
-    //QString path = QFileDialog::getOpenFileName(this, "OPEN", "../", "CSV(*.csv)");//设置文件路径 文件格式
-
-    //if (path.isEmpty() == false) {//路径正确
-    //    //创建文件对象 并且关联起来
-    ////    QFile file(path);
-    ////    QTextStream in(&file);
-    ////    //in.setEncoding(QStringConverter::Utf8);
-    ////    in.setAutoDetectUnicode(true);
-    ////    bool isok = file.open(QIODevice::ReadOnly);//利用只读模式打开文件
-    ////    if (isok) {//打开成功
-    ////        //读取文件内容
-    ////        //1.一次性读取 file.readAll()
-    ////        //QByteArray array = file.readAll();//一次性读取
-    ////        //ui.textEdit->setText(QString(array));//在文本区域显示
-
-    ////        //2.行读取 
-    ////        in.readLine();
-    ////        QString array;
-    ////        while (in.atEnd()==false) {
-    ////            array =in.readLine();  
-    ////            //ui.textEdit->append(array);//在文本区域显示
-    ////           // QDebug(array);
-    ////        }
-    ////    }
-    ////    file.close();
-    ////}
-    //    ifstream csv_data(path.toStdString(), ios::in);
-    //    string line;
-
-    //    if (!csv_data.is_open())
-    //    {
-    //        cout << "Error: opening file fail" << endl;
-    //        exit(1);
-    //    }
-    //    istringstream sin;         //将整行字符串line读入到字符串istringstream中
-    //    vector<string> words; //声明一个字符串向量
-    //    string word;
-
-    //    // 读取标题行
-    //    getline(csv_data, line);
-    //    // 读取数据
-    //    while (getline(csv_data, line))
-    //    {
-    //        sin.clear();
-    //        sin.str(line);
-    //        words.clear();
-    //        while (getline(sin, word, ',')) //将字符串流sin中的字符读到word字符串中，以逗号为分隔符
-    //        {
-    //            words.push_back(word); //将每一格中的数据逐个push
-    //        }
-    //        course tmp;
-    //        tmp.no = stoi(words[0]);
-    //        tmp.name = words[1];
-    //        tmp.credits = stoi(words[2]);
-    //        tmp.hours = stoi(words[3]);
-    //        tmp.sort = words[4];
-    //        for (int i = 5; i < words.size(); i++)
-    //        {
-    //            tmp.prerequisites.push_back(words[i]);
-    //        }
-    //        mycourses.push_back(tmp);
-    //    }
-    //    csv_data.close();
-    //}
 }
 
 void QtWidgetsApplication2::wc()
@@ -225,22 +150,16 @@ void QtWidgetsApplication2::sh() {
         ui.layout_button->addWidget(generate_button);
         ui.layout_button->addWidget(add2);
         ui.layout_label->addWidget(label1);
-        //scrollArea = new QScrollArea(ui.widget);
         autoScroll* scrollauto = new autoScroll(ui.widget);
-        //scrollArea->setWidgetResizable(true);
-        //contentWidget = new QWidget(scrollArea);
         contentWidget = new QWidget(scrollauto);
         scrollauto->setWidget(contentWidget);
-        // scrollArea->setWidget(contentWidget);
 
         layout = new QVBoxLayout(contentWidget);
 
         // 设置滚动区域为当前小部件的子对象
-        //scrollArea->setParent(ui.widget);
         scrollauto->setParent(ui.widget);
 
         // 将 contentWidget 添加到当前小部件的布局中
-       // mainLayout->addWidget(scrollArea);
         mainLayout->addWidget(scrollauto);
         if (check == 0) {
             for (int i = 0; i < aGraphl->VerticesNum(); i++)
@@ -639,53 +558,6 @@ void QtWidgetsApplication2::generate_table() {
 
 bool QtWidgetsApplication2::read_in(vector<course>& mycourses) {
     mycourses.clear();
-    /*QString path = QFileDialog::getOpenFileName(this, "OPEN", "../", "CSV(*.csv)");//设置文件路径 文件格式
-
-    if (path.isEmpty() == false) {//路径正确
-        ifstream csv_data(path.toStdString(), ios::in);
-        string line;
-
-        if (!csv_data.is_open())
-        {
-            cout << "Error: opening file fail" << endl;
-            exit(1);
-        }
-
-        istringstream sin;         //将整行字符串line读入到字符串istringstream中
-        vector<string> words; //声明一个字符串向量
-        string word;
-
-        // 读取标题行
-        getline(csv_data, line);
-        int count = 0;
-        // 读取数据
-        while (getline(csv_data, line))
-        {
-            sin.clear();
-            sin.str(line);
-            words.clear();
-            while (getline(sin, word, ',')) //将字符串流sin中的字符读到word字符串中，以逗号为分隔符
-            {
-                words.push_back(word); //将每一格中的数据逐个push
-            }
-            course tmp;
-            tmp.no = stoi(words[0]);
-            tmp.name = words[1];
-            tmp.credits = stoi(words[2]);
-            tmp.hours = stoi(words[3]);
-            tmp.sort = words[4];
-            for (int i = 5; i < words.size(); i++)
-            {
-                tmp.prerequisites.push_back(words[i]);
-            }
-            mycourses.push_back(tmp);
-            index[count++] = tmp.no;
-        }
-        csv_data.close();
-        return true;
-    }
-    return false;*/
-
     if (!OpenDatabase()) {
         return false;
     }
@@ -831,7 +703,6 @@ void QtWidgetsApplication2::del_redundancy() {
 }
 
 void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) {
-    //table* t = new table(term);
     dropTable* t1 = new dropTable(mycourses, term, time_limit);
     for (int i = 0; i < mycourses.size(); i++) {
         if (mycourses[i].sort == "Y" && indegree[i] == 0 && std::find(sort_courses.begin(), sort_courses.end(), mycourses[i]) == sort_courses.end()) {
@@ -841,7 +712,6 @@ void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) 
     while (!scourse.empty()) {
         course V = scourse.top();
         scourse.pop();                     //一个顶点出队
-        //t->set_table(V);
         t1->set_table(V);
         int no;
         for (auto& pair : index) {
@@ -850,14 +720,12 @@ void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) 
                 break;
             }
         }
-        //aGraphl->Mark[no] = VISITED;
         for (Edge e = aGraphl->FirstEdge(no); aGraphl->IsEdge(e); e = aGraphl->NextEdge(e)) {
             indegree[aGraphl->ToVertex(e)]--;  //所有与之相邻的顶点入度-1
             if (indegree[aGraphl->ToVertex(e)] == 0) {
                 if (!mode) {
                     if (mycourses[aGraphl->ToVertex(e)].sort != "Y") {
                         mcourse[mycourses[aGraphl->ToVertex(e)].name] = mycourses[aGraphl->ToVertex(e)];
-                        //if(mycourses[aGraphl->ToVertex(e)].sort != "选修课 ")
                         hours_count += mycourses[aGraphl->ToVertex(e)].hours;
                     }
                 }
@@ -869,17 +737,14 @@ void QtWidgetsApplication2::table_output(int mode, vector<string> course_names) 
             }
         }
     }
-    //connect(t1, &dropTable::cascade_chg, this, &QtWidgetsApplication2::cascade_courseDrag);
+    connect(t1, &dropTable::cascade_chg, this, &QtWidgetsApplication2::cascade_courseDrag);
     tables.push_back(t1);
     QLabel* spaceLabel = new QLabel(" ");
     layout->addWidget(spaceLabel);
     QString text = QString::fromLocal8Bit("第 ") + QString::number(term) + QString::fromLocal8Bit("学期 ");
     QLabel* label = new QLabel(text);
     layout->addWidget(label);
-    //QTableWidget* ta = t->show_table();
-    //ta->setMinimumSize(QSize(920, 150));
     t1->set_item();
-    //layout->addWidget(ta);
     layout->addWidget(t1->ltime);
     layout->addWidget(t1);
     for (int i = 0; i < 3; i++) {
@@ -908,6 +773,13 @@ void QtWidgetsApplication2::findMaxCombination(map<string, course>& data, vector
 }
 
 void QtWidgetsApplication2::cascade_courseDrag(course course_name, int from, int to) {
+    int no;
+    for (auto& pair : index) {
+        if (pair.second == course_name.no) {
+            no = pair.first;
+            break;
+        }
+    }
     vector<course> term_courses[8];
     for (int i = 0; i < 8; i++) {
         term_courses[i] = tables[i]->courses;
@@ -915,6 +787,11 @@ void QtWidgetsApplication2::cascade_courseDrag(course course_name, int from, int
     term_courses[from - 1].erase(std::find(term_courses[from - 1].begin(), term_courses[from - 1].end(), course_name));
     vector<course> tmp;
     if (to > from) {
+        if (8 - aGraphl->path[no] == from)
+        {
+            QMessageBox::warning(this, "hint", QString::fromLocal8Bit("本课程必须在本学期或之前选择，不能向后移动 "));
+            return;
+        }
         stack<course> course_cascade;
         course_cascade.push(course_name);
         vector<string>::iterator it;
@@ -929,19 +806,78 @@ void QtWidgetsApplication2::cascade_courseDrag(course course_name, int from, int
                         timeused -= term_courses[i][j].hours;
                         tmp.push_back(term_courses[i][j]);
                         term_courses[i].erase(term_courses[i].begin() + j);
+                        j--;
                     }
                 }
                 if (timeused + name.hours <= time_limit) {
                     term_courses[i].push_back(name);
                 }
                 else {
-                    //wrong
+                    QString message = QString::fromLocal8Bit("第 ")+QString::number(i+1)+ QString::fromLocal8Bit("学期课时不够，无法移动 ");
+                    QMessageBox::warning(this, "hint", message);
                     return;
                 }
             }
             for (int j = 0; j < tmp.size(); j++) {
                 course_cascade.push(tmp[j]);
             }
+            tmp.clear();
+        }
+    }
+    else {
+        stack<course> course_cascade;
+        course_cascade.push(course_name);
+        vector<string>::iterator it;
+        for (int i = to - 1; i >= 0 ; i--) {
+            int timeused = tables[i]->time_used;
+            while (!course_cascade.empty()) {
+                course name = course_cascade.top();
+                course_cascade.pop();
+                for (int j = 0; j < term_courses[i].size(); j++) {
+                    it = std::find(name.prerequisites.begin(), name.prerequisites.end(), term_courses[i][j].name);
+                    if (it != name.prerequisites.end()) {
+                        if (i == 0) {
+                            QMessageBox::warning(this, "hint", QString::fromLocal8Bit("该课程无法前移 "));
+                            return;
+                        }
+                        timeused -= term_courses[i][j].hours;
+                        tmp.push_back(term_courses[i][j]);
+                        term_courses[i].erase(term_courses[i].begin() + j);
+                        j--;
+                    }
+                }
+                if (timeused + name.hours <= time_limit) {
+                    term_courses[i].push_back(name);
+                }
+                else {
+                    QString message = QString::fromLocal8Bit("第 ") + QString::number(i + 1) + QString::fromLocal8Bit("学期课时不够，无法移动 ");
+                    QMessageBox::warning(this, "hint", message);
+                    return;
+                }
+            }
+            for (int j = 0; j < tmp.size(); j++) {
+                course_cascade.push(tmp[j]);
+            }
+            tmp.clear();
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        if(term_courses[i]==tables[i]->courses)
+			continue;
+        else {
+            for (int j = 0; j < tables[i]->courses.size(); j++) {
+                if (std::find(term_courses[i].begin(), term_courses[i].end(), tables[i]->courses[j]) == term_courses[i].end()) {
+                    tables[i]->del_item(tables[i]->courses[j].name);
+                    j--;
+                }
+            }
+            for (int j = 0; j < term_courses[i].size(); j++) {
+                if (std::find(tables[i]->courses.begin(), tables[i]->courses.end(), term_courses[i][j]) == tables[i]->courses.end()) {
+                    tables[i]->set_table(term_courses[i][j]);
+                }
+            }
+            tables[i]->clearContents();
+            tables[i]->set_item();
         }
     }
 }

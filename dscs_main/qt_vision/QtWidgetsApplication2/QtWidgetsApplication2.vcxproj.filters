@@ -45,9 +45,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </QtMoc>
     <QtMoc Include="drawing.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -59,6 +56,9 @@
     </QtMoc>
     <QtMoc Include="autoScroll.h">
       <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="main.cpp">
+      <Filter>Source Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
