@@ -38,6 +38,7 @@ void teacher_portal::read() {
 		indegree = new int[aGraphl->VerticesNum()];
 		for (int i = 0; i < aGraphl->VerticesNum(); i++)
 			indegree[i] = aGraphl->Indegree[i];
+		d = new Drawing(*aGraphl, mycourses, index);
 		QMessageBox::information(this, "hint", "succeed", QMessageBox::Ok);
 	}
 	else
@@ -141,12 +142,24 @@ void teacher_portal::initial(int mode) {
 				checkboxes.push_back(checkBox);
 			}
 
+			QLabel* lsub = new QLabel(QString::fromLocal8Bit("后继课:"));
+			QGridLayout* gridLayout_sub = new QGridLayout;
+
+			// 创建多选按钮并添加到网格布局
+			for (int i = 0; i < mycourses.size(); i++) {
+				QCheckBox* checkBox = new QCheckBox(QString::fromLocal8Bit(mycourses[i].name));
+				gridLayout_sub->addWidget(checkBox, i / 3, i % 3); // i / 3 行，i % 3 列
+				checkboxes_sub.push_back(checkBox);
+			}
+
 			vadd->addLayout(hno);
 			vadd->addLayout(hname);
 			vadd->addLayout(hcredits);
 			vadd->addLayout(htype);
 			vadd->addWidget(lpre);
 			vadd->addLayout(gridLayout);
+			vadd->addWidget(lsub);
+			vadd->addLayout(gridLayout_sub);
 			layout->addWidget(wadd);
 
 			connect(add1, &QPushButton::clicked, this, &teacher_portal::add_course);
@@ -224,21 +237,71 @@ void teacher_portal::add_course() {
 	tmp.credits = when_add[2]->text().toFloat();
 	tmp.hours = tmp.credits * 16;
 	tmp.sort = (c_type->checkedId()) ? "Y" : "N";
+
+	vector<string> tmp_sub;
+	vector<vector<string> > tmp_layer = d->get_layers();
+	int term_min = 0; //这门新加的课最早可以开的学期
 	for (int i = 0; i < checkboxes.size(); i++) {
 		if (checkboxes[i]->isChecked()) {
 			tmp.prerequisites.push_back(checkboxes[i]->text().toLocal8Bit().constData());
+			for (int j = 0; j < tmp_layer.size(); j++) {
+				for (int k = 0; k < tmp_layer[j].size(); k++) {
+					if (tmp_layer[j][k] == checkboxes[i]->text().toLocal8Bit().constData()) {
+						if (term_min < j + 1) {
+							term_min = j + 1;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	term_min++;
+	for (int i = 0; i < checkboxes_sub.size(); i++) {
+		if (checkboxes_sub[i]->isChecked()) {
+			if (std::find(tmp.prerequisites.begin(), tmp.prerequisites.end(), checkboxes_sub[i]->text().toLocal8Bit().constData()) == tmp.prerequisites.end()) {
+				if (aGraphl->path[i] + term_min + 1 > 8) {
+					QMessageBox::warning(this, "failed", QString::fromLocal8Bit("无法选择该后继课! "), QMessageBox::Ok);
+					return;
+				}
+				tmp_sub.push_back(checkboxes[i]->text().toLocal8Bit().constData());
+			}
+			else {
+				QMessageBox::warning(this, "failed", QString::fromLocal8Bit("先修课和后继课不能一样! "), QMessageBox::Ok);
+				return;
+			}
+		}
+	}
+	for (int i = 0; i < tmp_sub.size(); i++) {
+		for (int j = 0; j < mycourses.size(); j++) {
+			if (tmp_sub[i] == mycourses[j].name) {
+				mycourses[j].prerequisites.push_back(tmp.name);
+				for (int k = 0; k < tmp.prerequisites.size(); k++) {
+					if (std::find(mycourses[j].prerequisites.begin(), mycourses[j].prerequisites.end(), tmp.prerequisites[k]) != mycourses[j].prerequisites.end()) {
+						mycourses[j].prerequisites.erase(std::find(mycourses[j].prerequisites.begin(), mycourses[j].prerequisites.end(), tmp.prerequisites[k]));
+					}
+				}
+				string pres = "";
+				for (int k = 0; k < mycourses[j].prerequisites.size(); k++) {
+					pres += mycourses[j].prerequisites[k];
+					if (k != mycourses[j].prerequisites.size() - 1)
+						pres += ",";
+				}
+				QSqlQuery query;
+				QString sql = QString("UPDATE [course_manage].[dbo].[Table_course] SET Prerequisites = '%1' WHERE No = %2")
+					.arg(QString::fromLocal8Bit(pres.c_str())).arg(mycourses[j].no);
+				query.exec(sql);
+			}
 		}
 	}
 	mycourses.push_back(tmp);
 	index[mycourses.size() - 1] = tmp.no;
-	//delete aGraphl;
 	graph_set(aGraphl, mycourses);
 	for (int i = 0; i < aGraphl->VerticesNum(); i++) {
 		calpath(*aGraphl, i, 0);
 		aGraphl->path[i] = maxn;
 		maxn = -1;
 	}
-	//delete indegree;
 	indegree = new int[aGraphl->VerticesNum()];
 	for (int i = 0; i < aGraphl->VerticesNum(); i++)
 		indegree[i] = aGraphl->Indegree[i];
@@ -284,6 +347,7 @@ void teacher_portal::cancel() {
 		delete child1;
 	}
 	checkboxes.clear();
+	checkboxes_sub.clear();
 	when_add.clear();
 	for (int i = 0; i < aGraphl->VerticesNum(); i++)
 		indegree[i] = aGraphl->Indegree[i];

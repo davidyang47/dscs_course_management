@@ -261,8 +261,10 @@ private:
     }
     void back_to_login() {
         this->show();
-        sp->close();
-        tp->hide();
+        if (sp) {
+            sp->close();
+        }
+        tp->close();
     }
     void status_chg(QString username, bool s) {
         status[username] = s;

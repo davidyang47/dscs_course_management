@@ -27,6 +27,9 @@ public:
         zoomFactor = 1.1;
         isDragging = false;
     }
+    vector<vector<string> > get_layers() {
+		return layers;
+	}
 
 private slots:
     void search_course() {
@@ -350,8 +353,6 @@ private:
             while (!s1.empty()) {
                 course V = s1.top();
                 s1.pop();                     //一个顶点出队
-                /*   int no = V.no - 1;
-                   G.Mark[no] = VISITED;*/
                 int no;
                 for (auto& pair : index) {
                     if (pair.second == V.no) {

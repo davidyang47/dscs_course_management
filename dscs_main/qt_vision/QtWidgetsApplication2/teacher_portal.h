@@ -52,6 +52,7 @@ private:
     QVBoxLayout* mainLayout;
     QVBoxLayout* layout;
     QVector<QCheckBox*> checkboxes;
+    QVector<QCheckBox*> checkboxes_sub;  //专用加课时存储后继课
     vector<course> mycourses;
     Graphl* aGraphl;
     map<int, int> index;
